@@ -186,12 +186,17 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
     if (!this.raw) return options;
     return [...options, this.t._('VOTING.ABSTAIN'), this.t._('VOTING.ABSENT')];
   }
-  getResultOfBallotOptionBasedOnRaw(bIndex: number, oIndex: number): number {
+  getResultOfBallotOptionBasedOnRaw(bIndex: number, oIndex: number, includeAbstainAndAbsent = false): number {
     if (this.raw) return this.results[bIndex][oIndex].value;
     const oResults = Object.values(this.results[bIndex]);
-    const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
-    const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
-    return totNoAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totNoAbstainAndAbsent : 0;
+    if (includeAbstainAndAbsent) {
+      const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
+      return totWithAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totWithAbstainAndAbsent : 0;
+    } else {
+      const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
+      const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
+      return totNoAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totNoAbstainAndAbsent : 0;
+    }
   }
   getWinningBallotOptionIndex(bIndex: number): number | -1 {
     const oResults = Object.values(this.results[bIndex]);
@@ -214,6 +219,8 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
     if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.RELATIVE) return winnerOptionIndex;
     if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.SIMPLE)
       return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) > 1 / 2 ? winnerOptionIndex : -1;
+    if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.ABSOLUTE)
+      return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex,true) > 1 / 2 ? winnerOptionIndex : -1;
     if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.TWO_THIRDS)
       // @todo this majority should be fixed in the Statutes (it's not possible to calculate "+1" with weighted voting)
       return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) > 2 / 3 ? winnerOptionIndex : -1;
