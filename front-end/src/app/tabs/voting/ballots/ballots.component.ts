@@ -62,7 +62,7 @@ import { VotingResults } from '@models/votingResult.model';
                   <canvas [id]="chartCanvasBaseId + bIndex"></canvas>
                 </div>
               </ion-col>
-              <ion-col [size]="12" *ngIf="results && !raw">
+              <ion-col [size]="12" *ngIf="results && (!raw || ballot.majorityType === MajorityTypes.ABSOLUTE)">
                 <ion-item lines="none" class="outcomeItem">
                   <ion-badge slot="end" color="light" *ngIf="getWinningBallotOptionIndex(bIndex) !== -1">
                     {{ votingSession.ballots[bIndex].options[getWinningBallotOptionIndex(bIndex)] }}
@@ -217,15 +217,27 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
     if (moreWinningResultsWithSameValue) return -1;
 
     if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.RELATIVE) return winnerOptionIndex;
-    if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.SIMPLE)
-      return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) > 1 / 2 ? winnerOptionIndex : -1;
-    if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.ABSOLUTE)
-      return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex,true) > 1 / 2 ? winnerOptionIndex : -1;
-    if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.TWO_THIRDS)
-      // @todo this majority should be fixed in the Statutes (it's not possible to calculate "+1" with weighted voting)
-      return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) > 2 / 3 ? winnerOptionIndex : -1;
-  }
 
+    return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) >
+      this.getMajorityThreshold(bIndex, this.votingSession.ballots[bIndex].majorityType, this.votingSession.isWeighted)
+      ? winnerOptionIndex
+      : -1;
+  }
+  getMajorityThreshold(bIndex: number, majorityType: VotingMajorityTypes, isWeighted: boolean) {
+    const oResults = Object.values(this.results[bIndex]);
+    if (majorityType === VotingMajorityTypes.SIMPLE) return 1 / 2;
+    if (majorityType === VotingMajorityTypes.ABSOLUTE) {
+      if (!isWeighted) {
+        const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
+
+        return totWithAbstainAndAbsent / 2;
+      } else {
+        return 1 / 2;
+      }
+    }
+    // @todo this majority should be fixed in the Statutes (it's not possible to calculate "+1" with weighted voting)
+    if (majorityType === VotingMajorityTypes.TWO_THIRDS) return 2 / 3;
+  }
   handleBallotReorder({ detail }): void {
     this.votingSession.ballots = detail.complete(this.votingSession.ballots);
   }
