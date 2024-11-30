@@ -1,6 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { IonicModule, PopoverController } from '@ionic/angular';
 import Chart from 'chart.js/auto';
 import { IDEATranslationsModule, IDEATranslationsService } from '@idea-ionic/common';
@@ -37,13 +47,18 @@ import { VotingResults } from '@models/votingResult.model';
             {{ 'VOTING.MAJORITY_TYPES.' + ballot.majorityType | translate }} <ion-icon icon="information" />
           </ion-card-subtitle>
         </ion-card-header>
+        <div class="ion-text-end ion-padding-end" *ngIf="votingSession.resultsPublished && results">
+          <ion-toggle [(ngModel)]="raw[bIndex]" (ngModelChange)="onRawChange(bIndex)">{{
+            'VOTING.RAW_RESULTS' | translate
+          }}</ion-toggle>
+        </div>
         <ion-card-content>
           <ion-grid class="ion-no-padding">
             <ion-row class="ion-align-items-center">
               <ion-col [size]="12" [sizeMd]="results ? 9 : 12">
                 <ion-item
                   lines="none"
-                  *ngFor="let option of getOptionsOfBallotIncludingAbstainAndAbsentByIndex(bIndex); let oIndex = index"
+                  *ngFor="let option of getOptionsOfBallotByIndexBasedOnRaw(bIndex); let oIndex = index"
                   [button]="results && !votingSession.isSecret()"
                   (click)="openBallotVotesDetailPopover(bIndex, oIndex, option, $event)"
                 >
@@ -52,8 +67,21 @@ import { VotingResults } from '@models/votingResult.model';
                     &nbsp;
                   </ion-badge>
                   <ion-label class="ion-text-wrap">{{ option }}</ion-label>
-                  <ion-badge *ngIf="results" slot="end" color="medium" class="resultPercentage">
+                  <ion-badge
+                    *ngIf="results && votingSession.isWeighted"
+                    slot="end"
+                    color="medium"
+                    class="resultPercentage"
+                  >
                     {{ getResultOfBallotOptionBasedOnRaw(bIndex, oIndex) | percent : '1.2-2' }}
+                  </ion-badge>
+                  <ion-badge
+                    *ngIf="results && !votingSession.isWeighted"
+                    slot="end"
+                    color="medium"
+                    class="resultPercentage"
+                  >
+                    {{ getResultOfBallotOptionBasedOnRaw(bIndex, oIndex) | number : '1.0' }}
                   </ion-badge>
                 </ion-item>
               </ion-col>
@@ -62,7 +90,7 @@ import { VotingResults } from '@models/votingResult.model';
                   <canvas [id]="chartCanvasBaseId + bIndex"></canvas>
                 </div>
               </ion-col>
-              <ion-col [size]="12" *ngIf="results && (!raw || ballot.majorityType === MajorityTypes.ABSOLUTE)">
+              <ion-col [size]="12" *ngIf="results">
                 <ion-item lines="none" class="outcomeItem">
                   <ion-badge slot="end" color="light" *ngIf="getWinningBallotOptionIndex(bIndex) !== -1">
                     {{ votingSession.ballots[bIndex].options[getWinningBallotOptionIndex(bIndex)] }}
@@ -124,7 +152,7 @@ import { VotingResults } from '@models/votingResult.model';
     `
   ]
 })
-export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
+export class BallotsStandaloneComponent implements OnInit, OnChanges, OnDestroy {
   /**
    * The voting session containing the ballots to display.
    */
@@ -136,7 +164,7 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
   /**
    * Whether to show the raw results.
    */
-  @Input() raw = false;
+  raw: boolean[];
   /**
    * Whether to display the actions to manage the ballots.
    */
@@ -157,18 +185,34 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
 
   chartCanvasBaseId: string;
 
-  constructor(private popoverCtrl: PopoverController, private t: IDEATranslationsService, public app: AppService) {}
+  constructor(
+    private popoverCtrl: PopoverController,
+    private t: IDEATranslationsService,
+    public app: AppService,
+    private cdRef: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.raw = Array<boolean>(this.votingSession.ballots.length);
+    this.votingSession.ballots.forEach((_, bIndex) => (this.raw[bIndex] = true));
+  }
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.results || changes.raw) {
+    if (changes.results) {
       this.charts.forEach(chart => chart?.destroy());
       this.charts = [];
       // we need to continue refresh the canvas ID because sometimes the chart's canvas doesn't update
       this.chartCanvasBaseId = 'chartBallot-'.concat(Date.now().toString(), '-');
-      setTimeout((): void => this.buildCharts(), 300);
+      this.votingSession.ballots.forEach((_,bIndex)=>setTimeout((): void => this.buildChart(bIndex), 300));
     }
   }
   ngOnDestroy(): void {
     this.charts.forEach(chart => chart?.destroy());
+  }
+  onRawChange(bIndex:number): void {
+    this.charts[bIndex].destroy();
+    // we need to continue refresh the canvas ID because sometimes the chart's canvas doesn't update
+    this.chartCanvasBaseId = 'chartBallot-'.concat(Date.now().toString(), '-');
+    setTimeout((): void => this.buildChart(bIndex), 300);
   }
 
   async openMajorityTypePopover(majorityType: string, event: Event): Promise<void> {
@@ -180,22 +224,25 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
     popover.present();
   }
 
-  getOptionsOfBallotIncludingAbstainAndAbsentByIndex(bIndex: number): string[] {
+  getOptionsOfBallotByIndexBasedOnRaw(bIndex: number): string[] {
     const options = this.votingSession.ballots[bIndex].options;
     if (!this.results) return [...options, this.t._('VOTING.ABSTAIN')];
-    if (!this.raw) return options;
+    if (this.raw[bIndex]) return options;
     return [...options, this.t._('VOTING.ABSTAIN'), this.t._('VOTING.ABSENT')];
   }
-  getResultOfBallotOptionBasedOnRaw(bIndex: number, oIndex: number, includeAbstainAndAbsent = false): number {
-    if (this.raw) return this.results[bIndex][oIndex].value;
+  getResultOfBallotOptionBasedOnRaw(bIndex: number, oIndex: number): number {
     const oResults = Object.values(this.results[bIndex]);
-    if (includeAbstainAndAbsent) {
-      const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
-      return totWithAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totWithAbstainAndAbsent : 0;
+    if (this.votingSession.isWeighted) {
+      if (this.raw[bIndex]) {
+        const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
+        const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
+        return totNoAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totNoAbstainAndAbsent : 0;
+      } else {
+        const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
+        return totWithAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totWithAbstainAndAbsent : 0;
+      }
     } else {
-      const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
-      const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
-      return totNoAbstainAndAbsent > 0 ? this.results[bIndex][oIndex].value / totNoAbstainAndAbsent : 0;
+      return this.results[bIndex][oIndex].value;
     }
   }
   getWinningBallotOptionIndex(bIndex: number): number | -1 {
@@ -203,67 +250,72 @@ export class BallotsStandaloneComponent implements OnChanges, OnDestroy {
     const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
 
     let winnerOptionIndex = -1;
+    // check which option got more votes excluding abstain and absent
     oResultsNoAbstainAndAbsent.forEach((x, oIndex): void => {
       if (winnerOptionIndex === -1 || x.value > oResultsNoAbstainAndAbsent[winnerOptionIndex].value)
         winnerOptionIndex = oIndex;
     });
-
+    // check if more than one option got the same amount of votes as the winning option
     const moreWinningResultsWithSameValue = oResultsNoAbstainAndAbsent.some(
       (_, oIndex): boolean =>
         oIndex !== winnerOptionIndex &&
         this.getResultOfBallotOptionBasedOnRaw(bIndex, oIndex) ===
           this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex)
     );
+    // if one is found, return -1
     if (moreWinningResultsWithSameValue) return -1;
-
+    // if the majority is relative return the option with more votes
     if (this.votingSession.ballots[bIndex].majorityType === VotingMajorityTypes.RELATIVE) return winnerOptionIndex;
-
-    return this.getResultOfBallotOptionBasedOnRaw(bIndex, winnerOptionIndex) >
-      this.getMajorityThreshold(bIndex, this.votingSession.ballots[bIndex].majorityType, this.votingSession.isWeighted)
+    //check if the option with more votes got enough votes based on majority
+    return oResultsNoAbstainAndAbsent[winnerOptionIndex].value > this.getMajorityThreshold(bIndex)
       ? winnerOptionIndex
       : -1;
   }
-  getMajorityThreshold(bIndex: number, majorityType: VotingMajorityTypes, isWeighted: boolean) {
+  getMajorityThreshold(bIndex: number) {
     const oResults = Object.values(this.results[bIndex]);
-    if (majorityType === VotingMajorityTypes.SIMPLE) return 1 / 2;
+    const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
+    const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
+    const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
+    const majorityType = this.votingSession.ballots[bIndex].majorityType;
+    if (majorityType === VotingMajorityTypes.SIMPLE)
+      return (this.votingSession.isWeighted ? 1 : totNoAbstainAndAbsent) / 2; // if weighted return 0.5, else half of received votes
     if (majorityType === VotingMajorityTypes.ABSOLUTE) {
-      if (!isWeighted) {
-        const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
-
-        return totWithAbstainAndAbsent / 2;
-      } else {
-        return 1 / 2;
-      }
+      // if weighted return 0.5, else half of total possible votes votes
+      return (this.votingSession.isWeighted ? 1 : totWithAbstainAndAbsent) / 2;
     }
     // @todo this majority should be fixed in the Statutes (it's not possible to calculate "+1" with weighted voting)
-    if (majorityType === VotingMajorityTypes.TWO_THIRDS) return 2 / 3;
+    if (majorityType === VotingMajorityTypes.TWO_THIRDS)
+      return (this.votingSession.isWeighted ? 2 : 2 * totWithAbstainAndAbsent) / 3;
   }
   handleBallotReorder({ detail }): void {
     this.votingSession.ballots = detail.complete(this.votingSession.ballots);
   }
 
-  buildCharts(): void {
+  buildChart(bIndex: number): void {
     if (!this.results) return;
-    this.votingSession.ballots.forEach((_, bIndex): void => {
-      const labels = this.getOptionsOfBallotIncludingAbstainAndAbsentByIndex(bIndex);
-      const data = this.getOptionsOfBallotIncludingAbstainAndAbsentByIndex(bIndex).map((_, oIndex): any =>
-        this.getResultOfBallotOptionBasedOnRaw(bIndex, oIndex)
-      );
+    const oResults = Object.values(this.results[bIndex]);
+    const totWithAbstainAndAbsent = oResults.reduce((tot, acc): number => (tot += acc.value), 0);
+    const oResultsNoAbstainAndAbsent = oResults.slice(0, oResults.length - 2);
+    const totNoAbstainAndAbsent = oResultsNoAbstainAndAbsent.reduce((tot, acc): number => (tot += acc.value), 0);
+    const totVotes = this.raw[bIndex] ? totNoAbstainAndAbsent : totWithAbstainAndAbsent;
+    const labels = this.getOptionsOfBallotByIndexBasedOnRaw(bIndex);
+    const data = this.getOptionsOfBallotByIndexBasedOnRaw(bIndex).map(
+      (_, oIndex): any => this.getResultOfBallotOptionBasedOnRaw(bIndex, oIndex) / totVotes
+    );
 
-      const chartCanvas = document.getElementById(this.chartCanvasBaseId + bIndex) as HTMLCanvasElement;
-      this.charts[bIndex] = new Chart(chartCanvas, {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: this.chartColors }] },
-        options: {
-          layout: { padding: 20 },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: { label: tooltipItem => `${(Number(tooltipItem.parsed) * 100).toFixed(2)}%` }
-            }
+    const chartCanvas = document.getElementById(this.chartCanvasBaseId + bIndex) as HTMLCanvasElement;
+    this.charts[bIndex] = new Chart(chartCanvas, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: this.chartColors }] },
+      options: {
+        layout: { padding: 20 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: tooltipItem => `${(Number(tooltipItem.parsed) * 100).toFixed(2)}%` }
           }
         }
-      });
+      }
     });
   }
 

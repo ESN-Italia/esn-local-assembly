@@ -188,7 +188,7 @@ class VotingSessionsRC extends ResourceController {
     const sumOfWeights = this.votingSession.getTotWeights();
     const balancedWeights: Record<string, number> = {};
     this.votingSession.voters.forEach(
-      voter => (balancedWeights[voter.id] = (this.votingSession.isWeighted ? voter.voteWeight : 1) / sumOfWeights)
+      voter => (balancedWeights[voter.id] = this.votingSession.isWeighted ? voter.voteWeight / sumOfWeights : 1)
     );
 
     const getSecretToken = (length = 7): string => Math.random().toString(36).slice(-length);
@@ -354,7 +354,9 @@ class VotingSessionsRC extends ResourceController {
     });
     votingResults.forEach(ballotResult => {
       const totValue = ballotResult.reduce((tot, acc): number => (tot += acc.value), 0);
-      const absent: { value: number; voters?: string[] } = { value: 1 - totValue };
+      const absent: { value: number; voters?: string[] } = {
+        value: (this.votingSession.isWeighted ? 1 : this.votingSession.voters.length) - totValue
+      };
       if (!this.votingSession.isSecret()) {
         const votersPresent = new Set(this.votingSession.participantVoters);
         absent.voters = this.votingSession.voters.map(x => x.name).filter(x => !votersPresent.has(x));

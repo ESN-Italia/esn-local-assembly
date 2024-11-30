@@ -18,8 +18,6 @@ export class VotingSessionPage {
 
   absentVoters: Voter[];
 
-  showRawResults = false;
-
   VotingSessionTypes = VotingSessionTypes;
 
   constructor(
