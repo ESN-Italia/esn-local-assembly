@@ -8,7 +8,7 @@ import { addStatisticEntry } from './statistics';
 
 import { User } from '../models/user.model';
 import { UsefulLink } from '../models/usefulLink.model';
-import { GAEventAttached } from '../models/event.model';
+import { AssemblyEventAttached } from '../models/event.model';
 import { StatisticEntityTypes } from '../models/statistic.model';
 
 ///
@@ -39,7 +39,10 @@ class UsefulLinks extends ResourceController {
 
     try {
       this.usefulLink = new UsefulLink(
-        await ddb.get({ TableName: DDB_TABLES.usefulLinks, Key: { linkId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.usefulLinks,
+          Key: { sectionCode: this.galaxyUser.sectionCode, linkId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Link not found');
@@ -47,7 +50,11 @@ class UsefulLinks extends ResourceController {
   }
 
   protected async getResources(): Promise<UsefulLink[]> {
-    let usefulLinks: UsefulLink[] = await ddb.scan({ TableName: DDB_TABLES.usefulLinks });
+    let usefulLinks: UsefulLink[] = await ddb.query({
+      TableName: DDB_TABLES.usefulLinks,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     usefulLinks = usefulLinks.map(x => new UsefulLink(x)).sort((a, b): number => a.sort - b.sort);
 
     await addStatisticEntry(this.galaxyUser, StatisticEntityTypes.USEFUL_LINKS);
@@ -61,8 +68,11 @@ class UsefulLinks extends ResourceController {
 
     if (this.usefulLink.event?.eventId) {
       try {
-        this.usefulLink.event = new GAEventAttached(
-          await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.usefulLink.event.eventId } })
+        this.usefulLink.event = new AssemblyEventAttached(
+          await ddb.get({
+            TableName: DDB_TABLES.events,
+            Key: { sectionCode: this.usefulLink.sectionCode, eventId: this.usefulLink.event.eventId }
+          })
         );
       } catch (error) {
         throw new HandledError('Event not found');
@@ -115,7 +125,10 @@ class UsefulLinks extends ResourceController {
     if (this.usefulLink.linkId === otherLinkId) throw new HandledError('Same link');
 
     const otherLink = new UsefulLink(
-      await ddb.get({ TableName: DDB_TABLES.usefulLinks, Key: { linkId: otherLinkId } })
+      await ddb.get({
+        TableName: DDB_TABLES.usefulLinks,
+        Key: { sectionCode: this.galaxyUser.sectionCode, linkId: otherLinkId }
+      })
     );
 
     const swapLinkSort = otherLink.sort;
@@ -132,6 +145,9 @@ class UsefulLinks extends ResourceController {
     if (!(this.galaxyUser.isAdministrator || this.galaxyUser.canManageDashboard))
       throw new HandledError('Unauthorized');
 
-    await ddb.delete({ TableName: DDB_TABLES.usefulLinks, Key: { linkId: this.usefulLink.linkId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.usefulLinks,
+      Key: { sectionCode: this.galaxyUser.sectionCode, linkId: this.usefulLink.linkId }
+    });
   }
 }

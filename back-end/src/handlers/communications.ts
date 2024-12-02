@@ -8,7 +8,7 @@ import { addStatisticEntry } from './statistics';
 
 import { User } from '../models/user.model';
 import { Communication } from '../models/communication.model';
-import { GAEventAttached } from '../models/event.model';
+import { AssemblyEventAttached } from '../models/event.model';
 import { StatisticEntityTypes } from '../models/statistic.model';
 
 ///
@@ -39,7 +39,10 @@ class Communications extends ResourceController {
 
     try {
       this.communication = new Communication(
-        await ddb.get({ TableName: DDB_TABLES.communications, Key: { communicationId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.communications,
+          Key: { sectionCode: this.galaxyUser.sectionCode, communicationId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Communication not found');
@@ -47,7 +50,11 @@ class Communications extends ResourceController {
   }
 
   protected async getResources(): Promise<Communication[]> {
-    let communications: Communication[] = await ddb.scan({ TableName: DDB_TABLES.communications });
+    let communications: Communication[] = await ddb.query({
+      TableName: DDB_TABLES.communications,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     communications = communications.map(x => new Communication(x));
 
     if (this.queryParams.year)
@@ -67,8 +74,11 @@ class Communications extends ResourceController {
 
     if (this.communication.event?.eventId) {
       try {
-        this.communication.event = new GAEventAttached(
-          await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.communication.event.eventId } })
+        this.communication.event = new AssemblyEventAttached(
+          await ddb.get({
+            TableName: DDB_TABLES.events,
+            Key: { sectionCode: this.galaxyUser.sectionCode, eventId: this.communication.event.eventId }
+          })
         );
       } catch (error) {
         throw new HandledError('Event not found');
@@ -134,7 +144,7 @@ class Communications extends ResourceController {
 
     await ddb.delete({
       TableName: DDB_TABLES.communications,
-      Key: { communicationId: this.communication.communicationId }
+      Key: { sectionCode: this.galaxyUser.sectionCode, communicationId: this.communication.communicationId }
     });
   }
 }

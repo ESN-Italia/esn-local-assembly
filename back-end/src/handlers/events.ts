@@ -4,7 +4,7 @@
 
 import { DynamoDB, HandledError, ResourceController } from 'idea-aws';
 
-import { GAEvent } from '../models/event.model';
+import { AssemblyEvent } from '../models/event.model';
 import { Topic } from '../models/topic.model';
 import { User } from '../models/user.model';
 import { VotingSession } from '../models/votingSession.model';
@@ -23,15 +23,15 @@ const DDB_TABLES = {
 };
 const ddb = new DynamoDB();
 
-export const handler = (ev: any, _: any, cb: any): Promise<void> => new GAEvents(ev, cb).handleRequest();
+export const handler = (ev: any, _: any, cb: any): Promise<void> => new AssemblEvents(ev, cb).handleRequest();
 
 ///
 /// RESOURCE CONTROLLER
 ///
 
-class GAEvents extends ResourceController {
+class AssemblEvents extends ResourceController {
   galaxyUser: User;
-  gaEvent: GAEvent;
+  assemblyEvent: AssemblyEvent;
 
   constructor(event: any, callback: any) {
     super(event, callback, { resourceId: 'eventId' });
@@ -42,53 +42,62 @@ class GAEvents extends ResourceController {
     if (!this.resourceId) return;
 
     try {
-      this.gaEvent = new GAEvent(await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.resourceId } }));
+      this.assemblyEvent = new AssemblyEvent(
+        await ddb.get({
+          TableName: DDB_TABLES.events,
+          Key: { sectionCode: this.galaxyUser.sectionCode, eventId: this.resourceId }
+        })
+      );
     } catch (err) {
       throw new HandledError('Event not found');
     }
   }
 
-  protected async getResources(): Promise<GAEvent[]> {
-    let events: GAEvent[] = await ddb.scan({ TableName: DDB_TABLES.events });
-    events = events.map(x => new GAEvent(x));
+  protected async getResources(): Promise<AssemblyEvent[]> {
+    let events: AssemblyEvent[] = await ddb.query({
+      TableName: DDB_TABLES.events,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
+    events = events.map(x => new AssemblyEvent(x));
     if (!this.queryParams.all) events = events.filter(x => !x.archivedAt);
     return events.sort((a, b): number => a.name.localeCompare(b.name));
   }
 
-  private async putSafeResource(opts: { noOverwrite: boolean }): Promise<GAEvent> {
-    const errors = this.gaEvent.validate();
+  private async putSafeResource(opts: { noOverwrite: boolean }): Promise<AssemblyEvent> {
+    const errors = this.assemblyEvent.validate();
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);
 
-    const putParams: any = { TableName: DDB_TABLES.events, Item: this.gaEvent };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(eventId)';
+    const putParams: any = { TableName: DDB_TABLES.events, Item: this.assemblyEvent };
+    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(eventId)';
     await ddb.put(putParams);
 
-    return this.gaEvent;
+    return this.assemblyEvent;
   }
 
-  protected async postResources(): Promise<GAEvent> {
+  protected async postResources(): Promise<AssemblyEvent> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    this.gaEvent = new GAEvent(this.body);
-    this.gaEvent.eventId = await ddb.IUNID(PROJECT);
+    this.assemblyEvent = new AssemblyEvent(this.body);
+    this.assemblyEvent.eventId = await ddb.IUNID(PROJECT);
 
     return await this.putSafeResource({ noOverwrite: true });
   }
 
-  protected async getResource(): Promise<GAEvent> {
-    return this.gaEvent;
+  protected async getResource(): Promise<AssemblyEvent> {
+    return this.assemblyEvent;
   }
 
-  protected async putResource(): Promise<GAEvent> {
+  protected async putResource(): Promise<AssemblyEvent> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    const oldEvent = new GAEvent(this.gaEvent);
-    this.gaEvent.safeLoad(this.body, oldEvent);
+    const oldEvent = new AssemblyEvent(this.assemblyEvent);
+    this.assemblyEvent.safeLoad(this.body, oldEvent);
 
     return await this.putSafeResource({ noOverwrite: false });
   }
 
-  protected async patchResource(): Promise<GAEvent> {
+  protected async patchResource(): Promise<AssemblyEvent> {
     switch (this.body.action) {
       case 'ARCHIVE':
         return await this.manageArchive(true);
@@ -98,30 +107,40 @@ class GAEvents extends ResourceController {
         throw new HandledError('Unsupported action');
     }
   }
-  private async manageArchive(archive: boolean): Promise<GAEvent> {
+  private async manageArchive(archive: boolean): Promise<AssemblyEvent> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    if (archive) this.gaEvent.archivedAt = new Date().toISOString();
-    else delete this.gaEvent.archivedAt;
+    if (archive) this.assemblyEvent.archivedAt = new Date().toISOString();
+    else delete this.assemblyEvent.archivedAt;
 
-    await ddb.put({ TableName: DDB_TABLES.events, Item: this.gaEvent });
-    return this.gaEvent;
+    await ddb.put({ TableName: DDB_TABLES.events, Item: this.assemblyEvent });
+    return this.assemblyEvent;
   }
 
   protected async deleteResource(): Promise<void> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    const topics: Topic[] = await ddb.scan({ TableName: DDB_TABLES.topics, IndexName: 'topicId-meta-index' });
-    const topicsWithEvent = topics.filter(x => x.event.eventId === this.gaEvent.eventId);
+    const topics: Topic[] = await ddb.query({
+      TableName: DDB_TABLES.topics,
+      IndexName: 'sectionCode-meta-index',
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
+    const topicsWithEvent = topics.filter(x => x.event.eventId === this.assemblyEvent.eventId);
     if (topicsWithEvent.length > 0) throw new HandledError('Event is used');
 
-    const votingSessions: VotingSession[] = await ddb.scan({
+    const votingSessions: VotingSession[] = await ddb.query({
       TableName: DDB_TABLES.votingSessions,
-      IndexName: 'sessionId-meta-index'
+      IndexName: 'sectionCode-meta-index',
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
     });
-    const votingSessionsWithEvent = votingSessions.filter(x => x.event?.eventId === this.gaEvent.eventId);
+    const votingSessionsWithEvent = votingSessions.filter(x => x.event?.eventId === this.assemblyEvent.eventId);
     if (votingSessionsWithEvent.length > 0) throw new HandledError('Event is used');
 
-    await ddb.delete({ TableName: DDB_TABLES.events, Key: { eventId: this.gaEvent.eventId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.events,
+      Key: { sectionCode: this.assemblyEvent.sectionCode, eventId: this.assemblyEvent.eventId }
+    });
   }
 }

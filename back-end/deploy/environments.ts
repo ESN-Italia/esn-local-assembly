@@ -9,7 +9,7 @@ export const DOMAIN = 'uranus-esnitalia.link';
 /**
  * An additional custom domain to use.
  */
-export const PROD_CUSTOM_DOMAIN =  null;//'local-assembly.esn.it';
+export const PROD_CUSTOM_DOMAIN =  '';//'local-assembly.esn.it';
 
 export const parameters: Parameters = {
   project: PROJECT,

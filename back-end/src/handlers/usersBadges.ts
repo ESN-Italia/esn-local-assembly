@@ -76,7 +76,10 @@ class UsersBadgesRC extends ResourceController {
 
     if (!Badge.isBuiltIn(badge)) {
       try {
-        await ddb.get({ TableName: DDB_TABLES.badges, Key: { badgeId: badge } });
+        await ddb.get({
+          TableName: DDB_TABLES.badges,
+          Key: { sectionCode: this.galaxyUser.sectionCode, badgeId: badge }
+        });
       } catch (error) {
         throw new HandledError('Target badge not found');
       }

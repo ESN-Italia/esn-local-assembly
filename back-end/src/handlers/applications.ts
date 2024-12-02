@@ -11,7 +11,6 @@ import { Application, ApplicationStatuses } from '../models/application.model';
 import { Opportunity } from '../models/opportunity.model';
 import { User } from '../models/user.model';
 import { Subject } from '../models/subject.model';
-import { Configurations } from '../models/configurations.model';
 
 ///
 /// CONSTANTS, ENVIRONMENT VARIABLES, HANDLER
@@ -61,7 +60,10 @@ class ApplicationsRC extends ResourceController {
 
     try {
       this.opportunity = new Opportunity(
-        await ddb.get({ TableName: DDB_TABLES.opportunities, Key: { opportunityId } })
+        await ddb.get({
+          TableName: DDB_TABLES.opportunities,
+          Key: { sectionCode: this.galaxyUser.sectionCode, opportunityId }
+        })
       );
     } catch (err) {
       throw new HandledError('Opportunity not found');
@@ -223,7 +225,10 @@ class ApplicationsRC extends ResourceController {
       url: OPPORTUNITY_BASE_URL.concat(this.opportunity.opportunityId),
       message
     };
-    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } });
+    const { appTitle } = await ddb.get({
+      TableName: DDB_TABLES.configurations,
+      Key: { sectionCode: this.galaxyUser.sectionCode }
+    });
     const sesConfig = { ...SES_CONFIG, sourceName: appTitle };
     if (!(await isEmailInBlockList(email)))
       await ses.sendTemplatedEmail({ toAddresses: [email], template, templateData }, sesConfig);
@@ -253,7 +258,7 @@ class ApplicationsRC extends ResourceController {
 
       await ddb.update({
         TableName: DDB_TABLES.opportunities,
-        Key: { opportunityId: this.opportunity.opportunityId },
+        Key: { sectionCode: this.opportunity.sectionCode,opportunityId: this.opportunity.opportunityId },
         UpdateExpression: 'SET numOfApplications = :num',
         ExpressionAttributeValues: { ':num': applicationsToOpportunity.length }
       });

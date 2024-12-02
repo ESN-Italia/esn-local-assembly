@@ -1,7 +1,7 @@
 import { Attachment, epochISOString, Resource } from 'idea-toolbox';
 
 import { TopicCategoryAttached } from './category.model';
-import { GAEventAttached } from './event.model';
+import { AssemblyEventAttached } from './event.model';
 import { Subject } from './subject.model';
 import { User, UserRoles } from './user.model';
 
@@ -9,6 +9,10 @@ import { User, UserRoles } from './user.model';
  * A topic for a Q&A set. It could be standard or live.
  */
 export class Topic extends Resource {
+  /**
+   *  The code of the section in ESN Accounts
+   */
+  sectionCode: string;
   /**
    * The ID of the topic.
    */
@@ -28,7 +32,7 @@ export class Topic extends Resource {
   /**
    * The event for which the topic is discussed.
    */
-  event: GAEventAttached;
+  event: AssemblyEventAttached;
   /**
    * The category that classifies the topic.
    */
@@ -104,11 +108,12 @@ export class Topic extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode, String);
     this.topicId = this.clean(x.topicId, String);
     this.type = this.clean(x.type, String, TopicTypes.STANDARD);
     this.name = this.clean(x.name, String);
     this.content = this.clean(x.content, String);
-    this.event = new GAEventAttached(x.event);
+    this.event = new AssemblyEventAttached(x.event);
     this.category = new TopicCategoryAttached(x.category);
     this.subjects = this.cleanArray(x.subjects, s => new Subject(s));
     this.createdAt = this.clean(x.createdAt, d => new Date(d).toISOString(), new Date().toISOString());
@@ -136,6 +141,7 @@ export class Topic extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.topicId = safeData.topicId;
     this.type = safeData.type;
     this.createdAt = safeData.createdAt;
@@ -173,6 +179,7 @@ export class Topic extends Resource {
    * Whether the user is allowed to ask questions/post messages on the topic.
    */
   canUserInteract(user: User): boolean {
+    if (this.sectionCode !== user.sectionCode) return false;
     if (this.isClosed()) return false;
     if (!this.rolesAbleToInteract.length) return true;
     return User.isAllowedBasedOnRoles(user, this.rolesAbleToInteract);

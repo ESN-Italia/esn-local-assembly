@@ -70,6 +70,8 @@ paths:
     get:
       summary: Get the platform's configurations
       tags: [Configurations]
+      security:
+        - AuthFunction: []
       responses:
         200:
           $ref: '#/components/responses/Configurations'

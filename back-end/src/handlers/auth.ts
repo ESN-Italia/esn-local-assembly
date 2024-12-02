@@ -54,6 +54,7 @@ const authorizeWebSocketApi = async (event: any): Promise<WebSocketAuthResult> =
     if (user.isAdministrator || user.canManageOpportunities || user.canManageDashboard)
       await verifyUserPermissions(user);
     result.principalId = user.userId;
+    result.sectionCode = user.sectionCode;
   }
 
   result.policyDocument = getPolicyDocumentToAllowWebSocketRequest(event.methodArn, !!user);
@@ -80,7 +81,7 @@ const verifyTokenAndGetESNAccountsUser = async (token: string): Promise<User> =>
 };
 const verifyUserPermissions = async (user: User): Promise<void> => {
   const { administratorsIds, opportunitiesManagersIds, dashboardManagersIds } = new Configurations(
-    await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+    await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: user.sectionCode } })
   );
   user.isAdministrator = administratorsIds.includes(user.userId);
   user.canManageOpportunities = user.isAdministrator || opportunitiesManagersIds.includes(user.userId);
@@ -117,4 +118,5 @@ interface HTTPAuthResult {
 interface WebSocketAuthResult {
   policyDocument?: Record<string, any>;
   principalId?: string;
+  sectionCode?: string;
 }

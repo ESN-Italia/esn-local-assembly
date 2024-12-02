@@ -26,14 +26,14 @@ class ScheduledOps extends GenericController {
   }
   private async closeTopicsWithPastDeadline(): Promise<void> {
     const now = new Date().toISOString();
-    const topics = await ddb.scan({ TableName: DDB_TABLES.topics, IndexName: 'topicId-willCloseAt-index' });
+    const topics = await ddb.scan({ TableName: DDB_TABLES.topics, IndexName: 'sectionCode-willCloseAt-index' });
     const topicsToClose = topics.filter(t => t.willCloseAt < now);
 
     for (const topic of topicsToClose) {
       try {
         await ddb.update({
           TableName: DDB_TABLES.topics,
-          Key: { topicId: topic.topicId },
+          Key: { sectionCode: topic.sectionCode, topicId: topic.topicId },
           UpdateExpression: 'SET closedAt = :deadline REMOVE willCloseAt',
           ExpressionAttributeValues: { ':deadline': topic.willCloseAt }
         });
@@ -54,7 +54,7 @@ class ScheduledOps extends GenericController {
       try {
         await ddb.update({
           TableName: DDB_TABLES.opportunities,
-          Key: { opportunityId: opportunity.opportunityId },
+          Key: { sectionCode: opportunity.sectionCode, opportunityId: opportunity.opportunityId },
           UpdateExpression: 'SET closedAt = :deadline REMOVE willCloseAt',
           ExpressionAttributeValues: { ':deadline': opportunity.willCloseAt }
         });

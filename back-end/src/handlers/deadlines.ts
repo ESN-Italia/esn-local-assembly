@@ -8,7 +8,7 @@ import { addStatisticEntry } from './statistics';
 
 import { User } from '../models/user.model';
 import { Deadline } from '../models/deadline.model';
-import { GAEventAttached } from '../models/event.model';
+import { AssemblyEventAttached } from '../models/event.model';
 import { StatisticEntityTypes } from '../models/statistic.model';
 
 ///
@@ -39,7 +39,10 @@ class Deadlines extends ResourceController {
 
     try {
       this.deadline = new Deadline(
-        await ddb.get({ TableName: DDB_TABLES.deadlines, Key: { deadlineId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.deadlines,
+          Key: { sectionCode: this.galaxyUser.sectionCode, deadlineId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Deadline not found');
@@ -47,7 +50,11 @@ class Deadlines extends ResourceController {
   }
 
   protected async getResources(): Promise<Deadline[]> {
-    let deadlines: Deadline[] = await ddb.scan({ TableName: DDB_TABLES.deadlines });
+    let deadlines: Deadline[] = await ddb.query({
+      TableName: DDB_TABLES.deadlines,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     deadlines = deadlines.map(x => new Deadline(x));
 
     if (this.queryParams.year)
@@ -67,8 +74,11 @@ class Deadlines extends ResourceController {
 
     if (this.deadline.event?.eventId) {
       try {
-        this.deadline.event = new GAEventAttached(
-          await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.deadline.event.eventId } })
+        this.deadline.event = new AssemblyEventAttached(
+          await ddb.get({
+            TableName: DDB_TABLES.events,
+            Key: { sectionCode: this.galaxyUser.sectionCode, eventId: this.deadline.event.eventId }
+          })
         );
       } catch (error) {
         throw new HandledError('Event not found');
@@ -111,6 +121,9 @@ class Deadlines extends ResourceController {
     if (!(this.galaxyUser.isAdministrator || this.galaxyUser.canManageDashboard))
       throw new HandledError('Unauthorized');
 
-    await ddb.delete({ TableName: DDB_TABLES.deadlines, Key: { deadlineId: this.deadline.deadlineId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.deadlines,
+      Key: { sectionCode: this.galaxyUser.sectionCode, deadlineId: this.deadline.deadlineId }
+    });
   }
 }

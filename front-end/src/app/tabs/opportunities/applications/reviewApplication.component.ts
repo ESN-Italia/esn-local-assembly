@@ -20,7 +20,7 @@ import { TopicsService } from '../../topics/topics.service';
 import { Application } from '@models/application.model';
 import { Opportunity } from '@models/opportunity.model';
 import { TopicCategoryAttached } from '@models/category.model';
-import { GAEventAttached } from '@models/event.model';
+import { AssemblyEventAttached } from '@models/event.model';
 
 @Component({
   standalone: true,
@@ -113,7 +113,7 @@ export class ReviewApplicationStandaloneComponent implements OnInit {
   reviewMessage: string;
 
   promoteTopicCategory: TopicCategoryAttached;
-  promoteTopicEvent: GAEventAttached;
+  promoteTopicEvent: AssemblyEventAttached;
   errors = new Set<string>();
 
   constructor(

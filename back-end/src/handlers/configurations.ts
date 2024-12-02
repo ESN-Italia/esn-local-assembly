@@ -44,18 +44,16 @@ class ConfigurationsRC extends ResourceController {
 
   constructor(event: any, callback: any) {
     super(event, callback);
-    // GET /configurations is public
-    this.galaxyUser = event.requestContext.authorizer ? new User(event.requestContext.authorizer.lambda.user) : null;
+    this.galaxyUser = new User(event.requestContext.authorizer.lambda.user);
   }
 
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.configurations = new Configurations(
-        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: this.galaxyUser.sectionCode } })
       );
     } catch (err) {
-      if (String(err) === 'Error: Not found') this.configurations = new Configurations({ PK: Configurations.PK });
-      else throw new HandledError('Error loading configuration');
+      throw new HandledError('Error loading configuration');
     }
   }
 
@@ -66,7 +64,7 @@ class ConfigurationsRC extends ResourceController {
   protected async putResources(): Promise<Configurations> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    this.configurations = new Configurations({ ...this.body, PK: Configurations.PK });
+    this.configurations = new Configurations({ ...this.body, sectionCode: this.galaxyUser.sectionCode });
 
     const errors = this.configurations.validate();
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);

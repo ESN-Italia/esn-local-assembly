@@ -36,7 +36,10 @@ class TopicCategories extends ResourceController {
 
     try {
       this.topicCategory = new TopicCategory(
-        await ddb.get({ TableName: DDB_TABLES.categories, Key: { categoryId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.categories,
+          Key: { sectionCode: this.galaxyUser.sectionCode, categoryId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Category not found');
@@ -44,7 +47,11 @@ class TopicCategories extends ResourceController {
   }
 
   protected async getResources(): Promise<TopicCategory[]> {
-    let categories: TopicCategory[] = await ddb.scan({ TableName: DDB_TABLES.categories });
+    let categories: TopicCategory[] = await ddb.query({
+      TableName: DDB_TABLES.categories,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     categories = categories.map(x => new TopicCategory(x));
     if (!this.queryParams.all) categories = categories.filter(x => !x.archivedAt);
     return categories.sort((a, b): number => a.name.localeCompare(b.name));
@@ -106,10 +113,18 @@ class TopicCategories extends ResourceController {
   protected async deleteResource(): Promise<void> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    const topics: Topic[] = await ddb.scan({ TableName: DDB_TABLES.topics, IndexName: 'topicId-meta-index' });
+    const topics: Topic[] = await ddb.query({
+      TableName: DDB_TABLES.topics,
+      IndexName: 'sectionCode-meta-index',
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     const topicsWithCategory = topics.filter(x => x.category.categoryId === this.topicCategory.categoryId);
     if (topicsWithCategory.length > 0) throw new HandledError('Category is used');
 
-    await ddb.delete({ TableName: DDB_TABLES.categories, Key: { categoryId: this.topicCategory.categoryId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.categories,
+      Key: { sectionCode: this.topicCategory.sectionCode, categoryId: this.topicCategory.categoryId }
+    });
   }
 }

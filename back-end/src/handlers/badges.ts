@@ -34,14 +34,25 @@ class BadgesRC extends ResourceController {
     if (!this.resourceId) return;
 
     try {
-      this.badge = new Badge(await ddb.get({ TableName: DDB_TABLES.badges, Key: { badgeId: this.resourceId } }));
+      this.badge = new Badge(
+        await ddb.get({
+          TableName: DDB_TABLES.badges,
+          Key: { sectionCode: this.galaxyUser.sectionCode, badgeId: this.resourceId }
+        })
+      );
     } catch (err) {
       throw new HandledError('Badge not found');
     }
   }
 
   protected async getResources(): Promise<Badge[]> {
-    const badges = (await ddb.scan({ TableName: DDB_TABLES.badges })).map(b => new Badge(b));
+    const badges = (
+      await ddb.query({
+        TableName: DDB_TABLES.badges,
+        KeyConditionExpression: 'sectionCode = :sectionCode',
+        ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+      })
+    ).map(b => new Badge(b));
     return badges.sort((a, b): number => a.name.localeCompare(b.name));
   }
 
@@ -73,7 +84,10 @@ class BadgesRC extends ResourceController {
   protected async deleteResource(): Promise<void> {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
-    await ddb.delete({ TableName: DDB_TABLES.badges, Key: { badgeId: this.resourceId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.badges,
+      Key: { sectionCode: this.badge.sectionCode, badgeId: this.resourceId }
+    });
   }
 
   private async putSafeResource(opts: { noOverwrite: boolean }): Promise<Badge> {
@@ -81,7 +95,8 @@ class BadgesRC extends ResourceController {
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);
 
     const putParams: any = { TableName: DDB_TABLES.badges, Item: this.badge };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(badgeId)';
+    if (opts.noOverwrite)
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(badgeId)';
     await ddb.put(putParams);
 
     return this.badge;

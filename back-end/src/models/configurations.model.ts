@@ -6,11 +6,10 @@ export const DEFAULT_TIMEZONE = 'Europe/Brussels';
  * The platform's configuations.
  */
 export class Configurations extends Resource {
-  static PK = '1';
   /**
-   * A fixed string, to identify the configurations.
+   * Section Code
    */
-  PK = Configurations.PK;
+  sectionCode: string;
 
   /**
    * The IDs of the platform's administrators.
@@ -77,6 +76,7 @@ export class Configurations extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.administratorsIds = this.cleanArray(x.administratorsIds, String).map(x => x.toLowerCase());
     this.opportunitiesManagersIds = this.cleanArray(x.opportunitiesManagersIds, String).map(x => x.toLowerCase());
     this.dashboardManagersIds = this.cleanArray(x.dashboardManagersIds, String).map(x => x.toLowerCase());
@@ -97,11 +97,12 @@ export class Configurations extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
-    this.PK = Configurations.PK;
+    this.sectionCode = safeData.sectionCode;
   }
 
   validate(): string[] {
     const e = super.validate();
+    if (this.sectionCode) e.push('sectionCode');
     if (this.iE(this.administratorsIds)) e.push('administratorsIds');
     if (this.iE(this.appTitle)) e.push('appTitle');
     return e;

@@ -40,7 +40,10 @@ class MessagesRC extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');
@@ -79,7 +82,7 @@ class MessagesRC extends ResourceController {
     if (!this.topic.canUserInteract(this.galaxyUser)) throw new Error('Not allowed to interact');
 
     const { bannedUsersIds } = new Configurations(
-      await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+      await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: this.galaxyUser.sectionCode } })
     );
     if (bannedUsersIds.includes(this.galaxyUser.userId)) throw new Error('User is banned');
 

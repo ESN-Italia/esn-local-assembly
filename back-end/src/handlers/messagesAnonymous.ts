@@ -30,7 +30,12 @@ class MessagesAnonymousRC extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.query({
+          TableName: DDB_TABLES.topics,
+          IndexName: 'topicId-meta-index',
+          KeyConditionExpression: 'topicId = :topicId',
+          ExpressionAttributeValues: { ':topicId': this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');

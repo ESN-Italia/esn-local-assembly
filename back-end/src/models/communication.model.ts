@@ -1,11 +1,15 @@
 import { epochISOString, Resource } from 'idea-toolbox';
 
-import { GAEventAttached } from './event.model';
+import { AssemblyEventAttached } from './event.model';
 
 /**
  * A communication intended as news.
  */
 export class Communication extends Resource {
+  /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
   /**
    * The ID of the communication.
    */
@@ -33,7 +37,7 @@ export class Communication extends Resource {
   /**
    * The event to which the communication refers to (if any).
    */
-  event: GAEventAttached | null;
+  event: AssemblyEventAttached | null;
   /**
    * The timestamp when the communication was archived (if so).
    */
@@ -41,18 +45,20 @@ export class Communication extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode, String);
     this.communicationId = this.clean(x.communicationId, String);
     this.name = this.clean(x.name, String);
     this.brief = this.clean(x.brief, String);
     this.content = this.clean(x.content, String);
     this.date = this.clean(x.date, d => new Date(d).toISOString(), new Date().toISOString());
     this.imageURL = this.clean(x.imageURL, String);
-    this.event = x.event?.eventId ? new GAEventAttached(x.event) : null;
+    this.event = x.event?.eventId ? new AssemblyEventAttached(x.event) : null;
     if (x.archivedAt) this.archivedAt = this.clean(x.archivedAt, d => new Date(d).toISOString());
   }
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.communicationId = safeData.communicationId;
     if (safeData.archivedAt) this.archivedAt = safeData.archivedAt;
   }

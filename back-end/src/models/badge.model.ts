@@ -5,6 +5,10 @@ import { epochISOString, Resource } from 'idea-toolbox';
  */
 export class Badge extends Resource {
   /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
+  /**
    * The ID of the badge.
    */
   badgeId: string;
@@ -23,6 +27,7 @@ export class Badge extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.badgeId = this.clean(x.badgeId, String);
     this.name = this.clean(x.name, String);
     this.description = this.clean(x.description, String);
@@ -31,6 +36,7 @@ export class Badge extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.badgeId = safeData.badgeId;
   }
 

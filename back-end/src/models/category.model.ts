@@ -5,6 +5,10 @@ import { epochISOString, Resource } from 'idea-toolbox';
  */
 export class TopicCategory extends Resource {
   /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
+  /**
    * The ID of the category.
    */
   categoryId: string;
@@ -23,6 +27,7 @@ export class TopicCategory extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.categoryId = this.clean(x.categoryId, String);
     this.name = this.clean(x.name, String);
     this.color = this.clean(x.color, String);
@@ -31,6 +36,7 @@ export class TopicCategory extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.categoryId = safeData.categoryId;
     if (safeData.archivedAt) this.archivedAt = safeData.archivedAt;
   }

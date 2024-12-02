@@ -42,7 +42,10 @@ class MessagesUpvotesRC extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');

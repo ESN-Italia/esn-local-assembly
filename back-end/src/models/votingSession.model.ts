@@ -1,6 +1,6 @@
 import { epochISOString, Resource } from 'idea-toolbox';
 
-import { GAEventAttached } from './event.model';
+import { AssemblyEventAttached } from './event.model';
 import { User } from './user.model';
 import { VotingResults } from './votingResult.model';
 
@@ -8,6 +8,10 @@ import { VotingResults } from './votingResult.model';
  * A session in which users can vote.
  */
 export class VotingSession extends Resource {
+  /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
   /**
    * The ID of the voting session.
    */
@@ -31,7 +35,7 @@ export class VotingSession extends Resource {
   /**
    * The event for which the voting session is taken (if any).
    */
-  event: GAEventAttached | null;
+  event: AssemblyEventAttached | null;
   /**
    * The timestamp of creation.
    */
@@ -94,13 +98,14 @@ export class VotingSession extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.sessionId = this.clean(x.sessionId, String);
     this.name = this.clean(x.name, String);
     this.description = this.clean(x.description, String);
     this.type = this.clean(x.type, String, VotingSessionTypes.FORM_PUBLIC);
     if (!x.type && x.isSecret) this.type = VotingSessionTypes.FORM_SECRET; // backwards compatibility prior #88
     this.isWeighted = this.clean(x.isWeighted, Boolean, false);
-    this.event = x.event?.eventId ? new GAEventAttached(x.event) : null;
+    this.event = x.event?.eventId ? new AssemblyEventAttached(x.event) : null;
     this.createdAt = this.clean(x.createdAt, d => new Date(d).toISOString(), new Date().toISOString());
     if (x.updatedAt) this.updatedAt = this.clean(x.updatedAt, d => new Date(d).toISOString());
     if (x.publishedSince) this.publishedSince = this.clean(x.publishedSince, d => new Date(d).toISOString());
@@ -135,6 +140,7 @@ export class VotingSession extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.sessionId = safeData.sessionId;
     this.type = safeData.type;
     if (!this.type) this.type = safeData.isSecret ? VotingSessionTypes.FORM_SECRET : VotingSessionTypes.FORM_PUBLIC; // backwards compatibility prior #88

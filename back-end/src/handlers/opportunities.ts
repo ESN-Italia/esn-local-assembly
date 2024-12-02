@@ -38,7 +38,10 @@ class OpportunitiesRC extends ResourceController {
 
     try {
       this.opportunity = new Opportunity(
-        await ddb.get({ TableName: DDB_TABLES.opportunities, Key: { opportunityId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.opportunities,
+          Key: { sectionCode: this.galaxyUser.sectionCode, opportunityId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Opportunity not found');
@@ -46,7 +49,11 @@ class OpportunitiesRC extends ResourceController {
   }
 
   protected async getResources(): Promise<Opportunity[]> {
-    let opportunities: Opportunity[] = await ddb.scan({ TableName: DDB_TABLES.opportunities });
+    let opportunities: Opportunity[] = await ddb.query({
+      TableName: DDB_TABLES.opportunities,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     opportunities = opportunities.map(x => new Opportunity(x));
 
     opportunities = opportunities.filter(x => !x.isDraft() || x.canUserManage(this.galaxyUser));
@@ -69,7 +76,8 @@ class OpportunitiesRC extends ResourceController {
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);
 
     const putParams: any = { TableName: DDB_TABLES.opportunities, Item: this.opportunity };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(opportunityId)';
+    if (opts.noOverwrite)
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(opportunityId)';
     else this.opportunity.updatedAt = new Date().toISOString();
 
     await ddb.put(putParams);
@@ -81,6 +89,7 @@ class OpportunitiesRC extends ResourceController {
     if (!this.galaxyUser.canManageOpportunities) throw new HandledError('Unauthorized');
 
     this.opportunity = new Opportunity(this.body);
+    this.opportunity.sectionCode = this.galaxyUser.sectionCode;
     this.opportunity.opportunityId = await ddb.IUNID(PROJECT);
     this.opportunity.createdAt = new Date().toISOString();
     this.opportunity.yearOfCreation = new Date(this.opportunity.createdAt).getFullYear();

@@ -1,11 +1,15 @@
 import { epochISOString, Resource } from 'idea-toolbox';
 
-import { GAEventAttached } from './event.model';
+import { AssemblyEventAttached } from './event.model';
 
 /**
  * A deadline to let the users know of what they should do next.
  */
 export class Deadline extends Resource {
+  /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
   /**
    * The ID of the deadline.
    */
@@ -21,7 +25,7 @@ export class Deadline extends Resource {
   /**
    * The event to which the deadline refers to (if any).
    */
-  event: GAEventAttached | null;
+  event: AssemblyEventAttached | null;
   /**
    * A descriptive field to help users identify the target group/people of the deadline (if any).
    */
@@ -37,10 +41,11 @@ export class Deadline extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.deadlineId = this.clean(x.deadlineId, String);
     this.name = this.clean(x.name, String);
     this.at = this.clean(x.at, d => new Date(d).toISOString());
-    this.event = x.event?.eventId ? new GAEventAttached(x.event) : null;
+    this.event = x.event?.eventId ? new AssemblyEventAttached(x.event) : null;
     this.target = this.clean(x.target, String);
     this.action = this.clean(x.action, String);
     this.actionColor = this.clean(x.actionColor, String);
@@ -48,6 +53,7 @@ export class Deadline extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.deadlineId = safeData.deadlineId;
   }
 

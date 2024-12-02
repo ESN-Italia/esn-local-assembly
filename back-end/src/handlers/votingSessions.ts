@@ -5,11 +5,10 @@
 import { DynamoDB, HandledError, ResourceController, SES } from 'idea-aws';
 import { epochISOString } from 'idea-toolbox';
 
-import { GAEventAttached } from '../models/event.model';
+import { AssemblyEventAttached } from '../models/event.model';
 import { VotingSession } from '../models/votingSession.model';
 import { User } from '../models/user.model';
 import { VotingTicket } from '../models/votingTicket.model';
-import { Configurations } from '../models/configurations.model';
 import { VotingResultForBallotOption, VotingResults } from '../models/votingResult.model';
 
 ///
@@ -88,8 +87,11 @@ class VotingSessionsRC extends ResourceController {
 
     if (this.votingSession.event?.eventId) {
       try {
-        this.votingSession.event = new GAEventAttached(
-          await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.votingSession.event.eventId } })
+        this.votingSession.event = new AssemblyEventAttached(
+          await ddb.get({
+            TableName: DDB_TABLES.events,
+            Key: { sectionCode: this.votingSession.sectionCode, eventId: this.votingSession.event.eventId }
+          })
         );
       } catch (error) {
         throw new HandledError('Event not found');
@@ -214,7 +216,8 @@ class VotingSessionsRC extends ResourceController {
 
     for (const votingTicket of votingTickets) {
       try {
-        if (votingTicket.voterEmail) await this.sendVotingTicketToVoter(votingTicket);
+        if (votingTicket.voterEmail)
+          await this.sendVotingTicketToVoter(votingTicket, votingTicket.voterEmail, this.galaxyUser.sectionCode);
       } catch (error) {
         // it's ok if one email is not sent/received: we can send it again
         this.logger.warn('Voting ticket failed to send', error, { votingTicket });
@@ -224,14 +227,14 @@ class VotingSessionsRC extends ResourceController {
 
     return this.votingSession;
   }
-  private async sendVotingTicketToVoter(ticket: VotingTicket, email = ticket.voterEmail): Promise<void> {
+  private async sendVotingTicketToVoter(ticket: VotingTicket, email: string, sectionCode: string): Promise<void> {
     const template = `notify-voting-instructions-${STAGE}`;
     const templateData = {
       user: ticket.voterName,
       title: this.votingSession.name,
       url: `${VOTING_BASE_URL}/${this.votingSession.sessionId}?voterId=${ticket.voterId}&ticket=${ticket.token}`
     };
-    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } });
+    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: sectionCode } });
     const sesConfig = { ...SES_CONFIG, sourceName: appTitle };
     await ses.sendTemplatedEmail({ toAddresses: [email], template, templateData }, sesConfig);
   }
@@ -290,7 +293,7 @@ class VotingSessionsRC extends ResourceController {
     const votingTicket = new VotingTicket(
       await ddb.get({ TableName: DDB_TABLES.votingTickets, Key: { sessionId: this.votingSession.sessionId, voterId } })
     );
-    await this.sendVotingTicketToVoter(votingTicket, email);
+    await this.sendVotingTicketToVoter(votingTicket, email, this.galaxyUser.sectionCode);
   }
   private async getVotingTokenOfVoter(voterId: string): Promise<VotingTicket> {
     if (!this.votingSession.canUserManage(this.galaxyUser)) throw new HandledError('Unauthorized');

@@ -7,6 +7,10 @@ import { User } from './user.model';
  */
 export class Opportunity extends Resource {
   /**
+   * The code of the section from ESN Accounts
+   */
+  sectionCode: string;
+  /**
    * The ID of the opportunity.
    */
   opportunityId: string;
@@ -71,6 +75,7 @@ export class Opportunity extends Resource {
 
   load(x: any): void {
     super.load(x);
+    this.sectionCode = this.clean(x.sectionCode,String);
     this.opportunityId = this.clean(x.opportunityId, String);
     this.name = this.clean(x.name, String);
     this.content = this.clean(x.content, String);
@@ -92,6 +97,7 @@ export class Opportunity extends Resource {
 
   safeLoad(newData: any, safeData: any): void {
     super.safeLoad(newData, safeData);
+    this.sectionCode = safeData.sectionCode;
     this.opportunityId = safeData.opportunityId;
     this.createdAt = safeData.createdAt;
     this.yearOfCreation = safeData.yearOfCreation;
@@ -135,6 +141,7 @@ export class Opportunity extends Resource {
    * Whether the user can manage the opportunity.
    */
   canUserManage(user: User): boolean {
+    if(user.sectionCode !== this.sectionCode) return false;
     return user.canManageOpportunities || this.additionalManagersIds.includes(user.userId);
   }
 }

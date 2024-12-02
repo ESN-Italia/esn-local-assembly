@@ -7,7 +7,7 @@ import { parseStringPromise } from 'xml2js';
 import { sign } from 'jsonwebtoken';
 import { DynamoDB, HandledError, ResourceController, SystemsManager } from 'idea-aws';
 
-import { User } from '../models/user.model';
+import { User, UserRoles } from '../models/user.model';
 import { Configurations } from '../models/configurations.model';
 
 ///
@@ -63,11 +63,6 @@ class Login extends ResourceController {
       const data = jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'][0];
       const attributes = data['cas:attributes'][0];
       const userId = String(data['cas:user'][0]).toLowerCase();
-
-      const { administratorsIds, opportunitiesManagersIds, dashboardManagersIds } = await this.loadOrInitConfigurations(
-        userId
-      );
-
       const user = new User({
         userId,
         email: attributes['cas:mail'][0],
@@ -77,11 +72,14 @@ class Login extends ResourceController {
         roles: attributes['cas:roles'],
         section: attributes['cas:section'][0],
         country: attributes['cas:country'][0],
-        avatarURL: attributes['cas:picture'][0],
-        isAdministrator: administratorsIds.includes(userId),
-        canManageOpportunities: administratorsIds.includes(userId) || opportunitiesManagersIds.includes(userId),
-        canManageDashboard: administratorsIds.includes(userId) || dashboardManagersIds.includes(userId)
+        avatarURL: attributes['cas:picture'][0]
       });
+      const { administratorsIds, opportunitiesManagersIds, dashboardManagersIds } = await this.loadOrInitConfigurations(
+        user
+      );
+      user.isAdministrator = administratorsIds.includes(userId);
+      user.canManageOpportunities = administratorsIds.includes(userId) || opportunitiesManagersIds.includes(userId);
+      user.canManageDashboard = administratorsIds.includes(userId) || dashboardManagersIds.includes(userId);
       this.logger.info('ESN Accounts login', { user });
 
       const userData = JSON.parse(JSON.stringify(user));
@@ -97,18 +95,18 @@ class Login extends ResourceController {
     }
   }
 
-  private async loadOrInitConfigurations(firstAdminId: string): Promise<Configurations> {
+  private async loadOrInitConfigurations(user: User): Promise<Configurations> {
     try {
       return new Configurations(
-        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: user.sectionCode } })
       );
     } catch (err) {
-      if (String(err) === 'Error: Not found') {
-        const configurations = new Configurations({ PK: Configurations.PK, administratorsIds: [firstAdminId] });
+      if (String(err) === 'Error: Not found' && User.isAllowedBasedOnRoles(user, [UserRoles.LOCAL_BOARD])) {
+        const configurations = new Configurations({ sectionCode: user.sectionCode, administratorsIds: [user.userId] });
         await ddb.put({
           TableName: DDB_TABLES.configurations,
           Item: configurations,
-          ConditionExpression: 'attribute_not_exists(PK)'
+          ConditionExpression: 'attribute_not_exists(sectionCode)'
         });
         return configurations;
       } else throw new HandledError('Error loading configuration');

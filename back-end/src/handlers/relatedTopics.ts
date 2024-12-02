@@ -37,7 +37,10 @@ class RelatedTopics extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');
@@ -46,7 +49,12 @@ class RelatedTopics extends ResourceController {
     if (!this.resourceId) return;
 
     try {
-      this.relatedTopic = new Topic(await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.resourceId } }));
+      this.relatedTopic = new Topic(
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.resourceId }
+        })
+      );
     } catch (err) {
       throw new HandledError('Related topic not found');
     }
@@ -60,7 +68,7 @@ class RelatedTopics extends ResourceController {
     });
     const relatedTopics: Topic[] = await ddb.batchGet(
       DDB_TABLES.topics,
-      relatedTopicsLink.map(x => ({ topicId: x.topicB }))
+      relatedTopicsLink.map(x => ({ sectionCode: this.topic.sectionCode, topicId: x.topicB }))
     );
 
     return relatedTopics.map(x => new Topic(x)).sort((a, b): number => a.createdAt.localeCompare(b.createdAt));

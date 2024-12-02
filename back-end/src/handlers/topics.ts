@@ -9,7 +9,7 @@ import { addBadgeToUser } from './usersBadges';
 import { addStatisticEntry } from './statistics';
 
 import { TopicCategoryAttached } from '../models/category.model';
-import { GAEventAttached } from '../models/event.model';
+import { AssemblyEventAttached } from '../models/event.model';
 import { Topic, TopicTypes } from '../models/topic.model';
 import { RelatedTopic } from '../models/relatedTopic.model';
 import { User } from '../models/user.model';
@@ -57,14 +57,23 @@ class Topics extends ResourceController {
     if (!this.resourceId) return;
 
     try {
-      this.topic = new Topic(await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.resourceId } }));
+      this.topic = new Topic(
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.resourceId }
+        })
+      );
     } catch (err) {
       throw new HandledError('Topic not found');
     }
   }
 
   protected async getResources(): Promise<Topic[]> {
-    let topics: Topic[] = await ddb.scan({ TableName: DDB_TABLES.topics });
+    let topics: Topic[] = await ddb.query({
+      TableName: DDB_TABLES.topics,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     topics = topics.map(x => new Topic(x));
 
     if (!this.galaxyUser.isAdministrator) topics = topics.filter(x => !x.isDraft());
@@ -89,22 +98,29 @@ class Topics extends ResourceController {
 
     try {
       this.topic.category = new TopicCategoryAttached(
-        await ddb.get({ TableName: DDB_TABLES.categories, Key: { categoryId: this.topic.category.categoryId } })
+        await ddb.get({
+          TableName: DDB_TABLES.categories,
+          Key: { sectionCode: this.topic.sectionCode, categoryId: this.topic.category.categoryId }
+        })
       );
     } catch (error) {
       throw new HandledError('Category not found');
     }
 
     try {
-      this.topic.event = new GAEventAttached(
-        await ddb.get({ TableName: DDB_TABLES.events, Key: { eventId: this.topic.event.eventId } })
+      this.topic.event = new AssemblyEventAttached(
+        await ddb.get({
+          TableName: DDB_TABLES.events,
+          Key: { sectionCode: this.galaxyUser.sectionCode, eventId: this.topic.event.eventId }
+        })
       );
     } catch (error) {
       throw new HandledError('Event not found');
     }
 
     const putParams: any = { TableName: DDB_TABLES.topics, Item: this.topic };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(topicId)';
+    if (opts.noOverwrite)
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(topicId)';
     else this.topic.updatedAt = new Date().toISOString();
 
     await ddb.put(putParams);
@@ -146,7 +162,7 @@ class Topics extends ResourceController {
     opportunity: Opportunity,
     application: Application,
     category: TopicCategoryAttached,
-    event: GAEventAttached
+    event: AssemblyEventAttached
   ): Promise<Topic> {
     if (!this.galaxyUser.isAdministrator) throw new Error('Unauthorized');
 
@@ -161,6 +177,7 @@ class Topics extends ResourceController {
       category,
       event
     });
+    this.topic.sectionCode = this.galaxyUser.sectionCode;
     this.topic.topicId = await ddb.IUNID(PROJECT);
 
     for (const expectedAtt of opportunity.expectedAttachments) {
@@ -263,6 +280,9 @@ class Topics extends ResourceController {
     });
     if (topics.length > 0) throw new HandledError('Unlink related topics first');
 
-    await ddb.delete({ TableName: DDB_TABLES.topics, Key: { topicId: this.topic.topicId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.topics,
+      Key: { sectionCode: this.topic.sectionCode, topicId: this.topic.topicId }
+    });
   }
 }

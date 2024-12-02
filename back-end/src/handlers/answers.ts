@@ -11,7 +11,6 @@ import { Question } from '../models/question.model';
 import { Answer } from '../models/answer.model';
 import { User } from '../models/user.model';
 import { Subject } from '../models/subject.model';
-import { Configurations } from '../models/configurations.model';
 
 ///
 /// CONSTANTS, ENVIRONMENT VARIABLES, HANDLER
@@ -56,7 +55,10 @@ class Answers extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');
@@ -177,7 +179,10 @@ class Answers extends ResourceController {
       detail: question.summary,
       url: QUESTION_BASE_URL.concat(topic.topicId)
     };
-    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } });
+    const { appTitle } = await ddb.get({
+      TableName: DDB_TABLES.configurations,
+      Key: { sectionCode: topic.sectionCode }
+    });
     const sesConfig = { ...SES_CONFIG, sourceName: appTitle };
     if (!(await isEmailInBlockList(question.creator.email)))
       await ses.sendTemplatedEmail({ toAddresses: [question.creator.email], template, templateData }, sesConfig);

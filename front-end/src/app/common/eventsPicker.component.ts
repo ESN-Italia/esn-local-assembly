@@ -6,7 +6,7 @@ import { IDEATranslationsModule } from '@idea-ionic/common';
 
 import { GAEventsService } from '@tabs/configurations/events/events.service';
 
-import { GAEvent, GAEventAttached } from '@models/event.model';
+import { GAEvent, AssemblyEventAttached } from '@models/event.model';
 
 @Component({
   standalone: true,
@@ -35,8 +35,8 @@ export class EventsPickerComponent implements OnInit {
   /**
    * The event picked.
    */
-  @Input() event: GAEventAttached;
-  @Output() eventChange = new EventEmitter<GAEventAttached>();
+  @Input() event: AssemblyEventAttached;
+  @Output() eventChange = new EventEmitter<AssemblyEventAttached>();
   /**
    * The color of the item.
    */
@@ -61,7 +61,7 @@ export class EventsPickerComponent implements OnInit {
     this.events = await this._events.getList();
   }
 
-  compareWithEvent(e1: GAEventAttached, e2: GAEventAttached): boolean {
+  compareWithEvent(e1: AssemblyEventAttached, e2: AssemblyEventAttached): boolean {
     return e1 && e2 ? e1.eventId === e2.eventId : e1 === e2;
   }
 }

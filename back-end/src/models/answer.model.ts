@@ -63,6 +63,7 @@ export class Answer extends Resource {
    * Whether the user is allowed to edit the answer.
    */
   canUserEdit(topic: Topic, user: User, excludeAdmin = false): boolean {
+    if (topic.sectionCode !== user.sectionCode) return false;
     const timeCheck = !topic.acceptAnswersUntil || topic.acceptAnswersUntil > new Date().toISOString();
     const adminCheck = user.isAdministrator && !excludeAdmin;
     const creatorCheck = user.userId === this.creator.id;

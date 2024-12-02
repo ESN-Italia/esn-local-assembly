@@ -58,7 +58,10 @@ class Questions extends ResourceController {
   protected async checkAuthBeforeRequest(): Promise<void> {
     try {
       this.topic = new Topic(
-        await ddb.get({ TableName: DDB_TABLES.topics, Key: { topicId: this.pathParameters.topicId } })
+        await ddb.get({
+          TableName: DDB_TABLES.topics,
+          Key: { sectionCode: this.galaxyUser.sectionCode, topicId: this.pathParameters.topicId }
+        })
       );
     } catch (err) {
       throw new HandledError('Topic not found');
@@ -106,7 +109,7 @@ class Questions extends ResourceController {
     if (!this.topic.canUserInteract(this.galaxyUser)) throw new Error('Not allowed to interact');
 
     const { bannedUsersIds } = new Configurations(
-      await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+      await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: this.galaxyUser.sectionCode } })
     );
     if (bannedUsersIds.includes(this.galaxyUser.userId)) throw new Error('User is banned');
 
@@ -191,7 +194,7 @@ class Questions extends ResourceController {
     try {
       await ddb.update({
         TableName: DDB_TABLES.topics,
-        Key: { topicId: this.topic.topicId },
+        Key: { sectionCode: this.topic.sectionCode, topicId: this.topic.topicId },
         UpdateExpression: 'SET numOfQuestions = :num',
         ExpressionAttributeValues: { ':num': numOfQuestionsInTopic }
       });
@@ -210,7 +213,10 @@ class Questions extends ResourceController {
         detail: question.summary,
         url: QUESTION_BASE_URL.concat(topic.topicId)
       };
-      const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } });
+      const { appTitle } = await ddb.get({
+        TableName: DDB_TABLES.configurations,
+        Key: { sectionCode: this.topic.sectionCode }
+      });
       const sesConfig = { ...SES_CONFIG, sourceName: appTitle };
       if (!(await isEmailInBlockList(question.creator.email)))
         await ses.sendTemplatedEmail({ toAddresses: [subject.email], template, templateData }, sesConfig);

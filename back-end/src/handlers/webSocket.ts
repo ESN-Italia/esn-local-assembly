@@ -41,7 +41,7 @@ class WebSocketApiController extends GenericController {
       const { routeKey, connectionId, authorizer } = requestContext ?? {};
       switch (routeKey) {
         case '$connect':
-          await this.connect(connectionId, qp.type, qp.referenceId, authorizer?.principalId);
+          await this.connect(connectionId, qp.type, qp.referenceId, authorizer?.principalId, authorizer?.sectionCode);
           break;
         case '$disconnect':
           await this.disconnect(connectionId);
@@ -62,13 +62,14 @@ class WebSocketApiController extends GenericController {
     connectionId: string,
     type: WebSocketConnectionTypes,
     referenceId: string,
-    userId?: string
+    userId?: string,
+    sectionCode?: string
   ): Promise<void> {
     if (!type || !referenceId) throw new HandledError('Missing connection references');
     if (!Object.values(WebSocketConnectionTypes).includes(type))
       throw new HandledError('Unsupported connection reference');
     const connection = { connectionId, type, referenceId, expiresAt: TWO_HOURS_FROM_NOW_IN_SECONDS, userId };
-    await this.checkIfUserCanOpenConnection(type, referenceId, userId);
+    await this.checkIfUserCanOpenConnection(type, referenceId, userId,sectionCode);
     this.logger.debug('Opening connection', { connection });
     await ddb.put({ TableName: DDB_CONNECTIONS_TABLE, Item: connection });
   }
@@ -85,12 +86,13 @@ class WebSocketApiController extends GenericController {
   private async checkIfUserCanOpenConnection(
     type: WebSocketConnectionTypes,
     referenceId: string,
-    userId: string | null
+    userId: string | null,
+    sectionCode: string | null
   ): Promise<void> {
     if (type === WebSocketConnectionTypes.VOTING_TICKETS) {
-      if (!userId) throw new HandledError('Unauthorized');
+      if (!userId || !sectionCode) throw new HandledError('Unauthorized');
       const { administratorsIds } = new Configurations(
-        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } })
+        await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: sectionCode } })
       );
       if (administratorsIds.includes(userId)) return;
       const votingSession = new VotingSession(

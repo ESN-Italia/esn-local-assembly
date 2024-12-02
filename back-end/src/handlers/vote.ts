@@ -7,7 +7,6 @@ import { DynamoDB, HandledError, ResourceController, SES } from 'idea-aws';
 import { VotingSession } from '../models/votingSession.model';
 import { VotingTicket } from '../models/votingTicket.model';
 import { VotingResultForBallotOption } from '../models/votingResult.model';
-import { Configurations } from '../models/configurations.model';
 
 ///
 /// CONSTANTS, ENVIRONMENT VARIABLES, HANDLER
@@ -47,9 +46,14 @@ class VoteRC extends ResourceController {
     const { sessionId } = this.pathParameters;
 
     try {
-      this.votingSession = new VotingSession(
-        await ddb.get({ TableName: DDB_TABLES.votingSessions, Key: { sessionId } })
-      );
+      const sessionsFound = await ddb.query({
+        TableName: DDB_TABLES.votingSessions,
+        IndexName: 'inverted-index',
+        KeyConditionExpression: 'sessionId = :sessionId',
+        ExpressionAttributeValues: { ':sessionId': sessionId }
+      });
+      if (sessionsFound.length != 1) throw Error();
+      this.votingSession = new VotingSession(sessionsFound[0]);
     } catch (err) {
       throw new HandledError('Voting session not found');
     }
@@ -134,15 +138,15 @@ class VoteRC extends ResourceController {
     ]);
 
     try {
-      await this.sendVotingConfirmationToVoter(votingTicket);
+      await this.sendVotingConfirmationToVoter(votingTicket, this.votingSession.sectionCode);
     } catch (error) {
       this.logger.warn('Voting confirmation failed to send', error, { votingTicket });
     }
   }
-  private async sendVotingConfirmationToVoter(ticket: VotingTicket): Promise<void> {
+  private async sendVotingConfirmationToVoter(ticket: VotingTicket, sectionCode: string): Promise<void> {
     const template = `notify-voting-confirmation-${STAGE}`;
     const templateData = { user: ticket.voterName, title: this.votingSession.name };
-    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { PK: Configurations.PK } });
+    const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: sectionCode } });
     const sesConfig = { ...SES_CONFIG, sourceName: appTitle };
     await ses.sendTemplatedEmail({ toAddresses: [ticket.voterEmail], template, templateData }, sesConfig);
   }

@@ -76,29 +76,39 @@ const apiResources: ResourceController[] = [
 
 const tables: { [tableName: string]: DDBTable } = {
   configurations: {
-    PK: { name: 'PK', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING }
   },
   categories: {
-    PK: { name: 'categoryId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'categoryId', type: DDB.AttributeType.STRING }
   },
   events: {
-    PK: { name: 'eventId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'eventId', type: DDB.AttributeType.STRING }
   },
   topics: {
-    PK: { name: 'topicId', type: DDB.AttributeType.STRING },
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'topicId', type: DDB.AttributeType.STRING },
     indexes: [
       {
-        indexName: 'topicId-meta-index',
-        partitionKey: { name: 'topicId', type: DDB.AttributeType.STRING },
+        indexName: 'sectionCode-meta-index',
+        partitionKey: { name: 'sectionCode', type: DDB.AttributeType.STRING },
         sortKey: { name: 'name', type: DDB.AttributeType.STRING },
         projectionType: DDB.ProjectionType.INCLUDE,
         nonKeyAttributes: ['category', 'event']
       },
       {
-        indexName: 'topicId-willCloseAt-index',
-        partitionKey: { name: 'topicId', type: DDB.AttributeType.STRING },
+        indexName: 'sectionCode-willCloseAt-index',
+        partitionKey: { name: 'sectionCode', type: DDB.AttributeType.STRING },
         sortKey: { name: 'willCloseAt', type: DDB.AttributeType.STRING },
         projectionType: DDB.ProjectionType.KEYS_ONLY
+      },
+      {
+        indexName: 'topicId-meta-index',
+        partitionKey: {name: 'topicId', type: DDB.AttributeType.STRING},
+        sortKey: {name: 'name', type: DDB.AttributeType.STRING},
+        projectionType: DDB.ProjectionType.INCLUDE,
+        nonKeyAttributes: ['type']
       }
     ],
     stream: DDB.StreamViewType.NEW_AND_OLD_IMAGES
@@ -169,20 +179,24 @@ const tables: { [tableName: string]: DDBTable } = {
     ]
   },
   badges: {
-    PK: { name: 'badgeId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'badgeId', type: DDB.AttributeType.STRING }
   },
   usersBadges: {
     PK: { name: 'userId', type: DDB.AttributeType.STRING },
     SK: { name: 'badge', type: DDB.AttributeType.STRING }
   },
   usefulLinks: {
-    PK: { name: 'linkId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'linkId', type: DDB.AttributeType.STRING }
   },
   deadlines: {
-    PK: { name: 'deadlineId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'deadlineId', type: DDB.AttributeType.STRING }
   },
   communications: {
-    PK: { name: 'communicationId', type: DDB.AttributeType.STRING }
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'communicationId', type: DDB.AttributeType.STRING }
   },
   statistics: {
     PK: { name: 'PK', type: DDB.AttributeType.STRING },
@@ -195,13 +209,15 @@ const tables: { [tableName: string]: DDBTable } = {
     expiresAtField: 'expiresAt'
   },
   opportunities: {
-    PK: { name: 'opportunityId', type: DDB.AttributeType.STRING },
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'opportunityId', type: DDB.AttributeType.STRING },
     indexes: [
       {
         indexName: 'opportunityId-willCloseAt-index',
         partitionKey: { name: 'opportunityId', type: DDB.AttributeType.STRING },
         sortKey: { name: 'willCloseAt', type: DDB.AttributeType.STRING },
-        projectionType: DDB.ProjectionType.KEYS_ONLY
+        projectionType: DDB.ProjectionType.INCLUDE,
+        nonKeyAttributes: ['sectionCode']
       }
     ]
   },
@@ -210,14 +226,21 @@ const tables: { [tableName: string]: DDBTable } = {
     SK: { name: 'applicationId', type: DDB.AttributeType.STRING }
   },
   votingSessions: {
-    PK: { name: 'sessionId', type: DDB.AttributeType.STRING },
+    PK: { name: 'sectionCode', type: DDB.AttributeType.STRING },
+    SK: { name: 'sessionId', type: DDB.AttributeType.STRING },
     indexes: [
       {
-        indexName: 'sessionId-meta-index',
+        indexName: 'sectionCode-meta-index',
         partitionKey: { name: 'topicId', type: DDB.AttributeType.STRING },
         sortKey: { name: 'name', type: DDB.AttributeType.STRING },
         projectionType: DDB.ProjectionType.INCLUDE,
         nonKeyAttributes: ['event']
+      },
+      {
+        indexName: 'inverted-index',
+        partitionKey:{name:'sessionId',type:DDB.AttributeType.STRING},
+        sortKey:{name:'sectionCode',type:DDB.AttributeType.STRING},
+        projectionType:DDB.ProjectionType.ALL
       }
     ]
   },

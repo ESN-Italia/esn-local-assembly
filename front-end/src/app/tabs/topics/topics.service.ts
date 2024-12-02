@@ -4,7 +4,7 @@ import { IDEAApiService, IDEATranslationsService } from '@idea-ionic/common';
 import { Topic, TopicTypes } from '@models/topic.model';
 import { Application } from '@models/application.model';
 import { Opportunity } from '@models/opportunity.model';
-import { GAEventAttached } from '@models/event.model';
+import { AssemblyEventAttached } from '@models/event.model';
 import { TopicCategoryAttached } from '@models/category.model';
 
 @Injectable({ providedIn: 'root' })
@@ -185,7 +185,7 @@ export class TopicsService {
     opportunity: Opportunity,
     application: Application,
     category: TopicCategoryAttached,
-    event: GAEventAttached
+    event: AssemblyEventAttached
   ): Promise<Topic> {
     const body = { action: 'INSERT_FROM_APPLICATION', opportunity, application, category, event };
     return new Topic(await this.api.patchResource('topics', { body }));
