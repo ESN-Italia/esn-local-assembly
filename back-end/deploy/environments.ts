@@ -1,15 +1,15 @@
 /**
  * The codename of the project.
  */
-export const PROJECT = 'esn-italian-qt';
+export const PROJECT = 'esn-local-assembly';
 /**
  * The purchased domain to use.
  */
-export const DOMAIN = 'esn-qt.org';
+export const DOMAIN = 'uranus-esnitalia.link';
 /**
  * An additional custom domain to use.
  */
-export const PROD_CUSTOM_DOMAIN = 'assembly.esn.it';
+export const PROD_CUSTOM_DOMAIN =  null;//'local-assembly.esn.it';
 
 export const parameters: Parameters = {
   project: PROJECT,
