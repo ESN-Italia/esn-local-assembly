@@ -1,4 +1,4 @@
-import { environment as defaultEnv } from './environment.idea';
+import { environment as defaultEnv } from './environment.idea.prod';
 
 // @idea note well: "environment.prod.ts" !== "AWS prod". Explanation:
 // When developing locally (no matter the scenario), the default environment file is used (`environment.ts`).

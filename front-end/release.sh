@@ -44,7 +44,13 @@ npm run lint ${SRC_FOLDER} 1>/dev/null
 
 # compile the project's typescript code
 echo -e "${C}Compiling...${NC}"
-ionic build --prod 1>/dev/null
+if [ "${ACTION}" == 'prod' ]
+then
+  ionic build --configuration production 1>/dev/null
+else
+  ionic build --configuration development 1>/dev/null
+fi
+
 
 # get the target CloudFront distribution and S3 bucket (from the domain)
 DISTRIBUTION=`aws cloudfront list-distributions --query "DistributionList.Items[*].{Id: Id, Aliases: Aliases.Items[?(@ == '${DOMAIN}')]} | [?Aliases].[Id]" --profile ${AWS_PROFILE} --output text`
