@@ -746,7 +746,7 @@ export class ManageVotingSessionPage implements OnDestroy {
     const sumOfWeights = this.votingSession.getTotWeights();
     const balancedWeights: Record<string, number> = {};
     this.votingSession.voters.forEach(
-      voter => (balancedWeights[voter.id] = (this.votingSession.isWeighted ? voter.voteWeight : 1) / sumOfWeights)
+      voter => (balancedWeights[voter.id] = this.votingSession.isWeighted ? voter.voteWeight / sumOfWeights : 1)
     );
     this.votingSession.ballots.forEach((_, bIndex): void => {
       results[bIndex] = [];

@@ -47,7 +47,7 @@ import { VotingResults } from '@models/votingResult.model';
             {{ 'VOTING.MAJORITY_TYPES.' + ballot.majorityType | translate }} <ion-icon icon="information" />
           </ion-card-subtitle>
         </ion-card-header>
-        <div class="ion-text-end ion-padding-end" *ngIf="votingSession.resultsPublished && results">
+        <div class="ion-text-end ion-padding-end" *ngIf="results">
           <ion-toggle [(ngModel)]="raw[bIndex]" (ngModelChange)="onRawChange(bIndex)">{{
             'VOTING.RAW_RESULTS' | translate
           }}</ion-toggle>
