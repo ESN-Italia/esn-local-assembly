@@ -5,11 +5,11 @@ export const PROJECT = 'esn-local-assembly';
 /**
  * The purchased domain to use.
  */
-export const DOMAIN = 'uranus-esnitalia.link';
+export const DOMAIN = 'local-assembly-esnitalia.click';
 /**
  * An additional custom domain to use.
  */
-export const PROD_CUSTOM_DOMAIN =  '';//'local-assembly.esn.it';
+export const PROD_CUSTOM_DOMAIN: string | null = null; //'local-assembly.esn.it';
 
 export const parameters: Parameters = {
   project: PROJECT,
