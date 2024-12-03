@@ -82,7 +82,7 @@ export class Configurations extends Resource {
     this.dashboardManagersIds = this.cleanArray(x.dashboardManagersIds, String).map(x => x.toLowerCase());
     this.bannedUsersIds = this.cleanArray(x.bannedUsersIds, String).map(x => x.toLowerCase());
 
-    this.appTitle = this.clean(x.appTitle, String, 'Assembly app');
+    this.appTitle = this.clean(x.appTitle, String, 'Local Assembly app');
     this.appSubtitle = this.clean(x.appSubtitle, String);
     this.supportEmail = this.clean(x.supportEmail, String);
     this.appLogoURL = this.clean(x.appLogoURL, String);

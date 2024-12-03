@@ -142,7 +142,7 @@ export class AppService {
   async info(): Promise<void> {
     const openPrivacyPolicy = (): Promise<void> => this.openURL(this.t._('IDEA_VARIABLES.PRIVACY_POLICY_URL'));
 
-    const header = this.configurations.appTitle;
+    const header = this.configurations?.appTitle ?? env.idea.app.defaultTitle;
     const message = this.t._('COMMON.VERSION', { v: env.idea.app.version });
     const buttons = [
       { text: this.t._('IDEA_AUTH.PRIVACY_POLICY'), handler: openPrivacyPolicy },
@@ -178,8 +178,8 @@ export class AppService {
    */
   getIcon(white = false): string {
     return white
-      ? this.configurations.appLogoURLDarkMode ?? APP_ICON_WHITE_PATH
-      : this.configurations.appLogoURL ?? APP_ICON_PATH;
+      ? this.configurations?.appLogoURLDarkMode ?? APP_ICON_WHITE_PATH
+      : this.configurations?.appLogoURL ?? APP_ICON_PATH;
   }
 
   /**

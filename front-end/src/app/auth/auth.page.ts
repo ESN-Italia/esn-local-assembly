@@ -12,7 +12,7 @@ import { environment as env } from '@env';
 })
 export class AuthPage implements OnInit {
   @Input() token: string;
-
+  title = this.app.configurations?.appTitle ?? env.idea.app.defaultTitle;
   version = env.idea.app.version;
 
   constructor(private storage: IDEAStorageService, public app: AppService) {}

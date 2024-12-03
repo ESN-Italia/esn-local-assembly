@@ -4,9 +4,9 @@ import { AlertController } from '@ionic/angular';
 import { IDEALoadingService, IDEAMessageService, IDEATranslationsService } from '@idea-ionic/common';
 
 import { AppService } from '@app/app.service';
-import { GAEventsService } from './events.service';
+import { AssemblyEventsService } from './events.service';
 
-import { GAEvent } from '@models/event.model';
+import { AssemblyEvent } from '@models/event.model';
 
 @Component({
   selector: 'event',
@@ -15,12 +15,12 @@ import { GAEvent } from '@models/event.model';
 })
 export class EventPage {
   @Input() eventId = 'new';
-  event: GAEvent;
+  event: AssemblyEvent;
 
   editMode = UXMode.VIEW;
   UXMode = UXMode;
   errors = new Set<string>();
-  entityBeforeChange: GAEvent;
+  entityBeforeChange: AssemblyEvent;
 
   constructor(
     private location: Location,
@@ -28,7 +28,7 @@ export class EventPage {
     private loading: IDEALoadingService,
     private message: IDEAMessageService,
     private t: IDEATranslationsService,
-    private _events: GAEventsService,
+    private _events: AssemblyEventsService,
     public app: AppService
   ) {}
   async ionViewWillEnter(): Promise<void> {
@@ -38,7 +38,7 @@ export class EventPage {
         this.event = await this._events.getById(this.eventId);
         this.editMode = UXMode.VIEW;
       } else {
-        this.event = new GAEvent();
+        this.event = new AssemblyEvent();
         this.editMode = UXMode.INSERT;
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export class EventPage {
 
     try {
       await this.loading.show();
-      let result: GAEvent;
+      let result: AssemblyEvent;
       if (this.editMode === UXMode.INSERT) result = await this._events.insert(this.event);
       else result = await this._events.update(this.event);
       this.event.load(result);
@@ -119,7 +119,7 @@ export class EventPage {
   }
 
   enterEditMode(): void {
-    this.entityBeforeChange = new GAEvent(this.event);
+    this.entityBeforeChange = new AssemblyEvent(this.event);
     this.editMode = UXMode.EDIT;
   }
   exitEditMode(): void {

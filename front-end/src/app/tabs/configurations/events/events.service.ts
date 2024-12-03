@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { IDEAApiService } from '@idea-ionic/common';
 
-import { GAEvent } from '@models/event.model';
+import { AssemblyEvent } from '@models/event.model';
 
 @Injectable({ providedIn: 'root' })
-export class GAEventsService {
-  private events: GAEvent[];
+export class AssemblyEventsService {
+  private events: AssemblyEvent[];
 
   /**
    * Whether in the cache we loaded all the events or only the NOT archived ones.
@@ -26,8 +26,8 @@ export class GAEventsService {
     this.all = all;
     const params: any = {};
     if (all) params.all = true;
-    const events: GAEvent[] = await this.api.getResource('events', { params });
-    this.events = events.map(x => new GAEvent(x));
+    const events: AssemblyEvent[] = await this.api.getResource('events', { params });
+    this.events = events.map(x => new AssemblyEvent(x));
   }
   /**
    * Get (and optionally filter) the list of events.
@@ -41,7 +41,7 @@ export class GAEventsService {
       withPagination?: boolean;
       startPaginationAfterId?: string;
     } = {}
-  ): Promise<GAEvent[]> {
+  ): Promise<AssemblyEvent[]> {
     if (!this.events || options.force || options.all !== this.all) await this.loadList(options.all);
     if (!this.events) return null;
 
@@ -69,41 +69,41 @@ export class GAEventsService {
   /**
    * Get a event by its id.
    */
-  async getById(eventId: string): Promise<GAEvent> {
-    return new GAEvent(await this.api.getResource(['events', eventId]));
+  async getById(eventId: string): Promise<AssemblyEvent> {
+    return new AssemblyEvent(await this.api.getResource(['events', eventId]));
   }
 
   /**
    * Insert a event.
    */
-  async insert(event: GAEvent): Promise<GAEvent> {
-    return new GAEvent(await this.api.postResource('events', { body: event }));
+  async insert(event: AssemblyEvent): Promise<AssemblyEvent> {
+    return new AssemblyEvent(await this.api.postResource('events', { body: event }));
   }
 
   /**
    * Update a event.
    */
-  async update(event: GAEvent): Promise<GAEvent> {
-    return new GAEvent(await this.api.putResource(['events', event.eventId], { body: event }));
+  async update(event: AssemblyEvent): Promise<AssemblyEvent> {
+    return new AssemblyEvent(await this.api.putResource(['events', event.eventId], { body: event }));
   }
 
   /**
    * Archive an event.
    */
-  async archive(event: GAEvent): Promise<void> {
+  async archive(event: AssemblyEvent): Promise<void> {
     await this.api.patchResource(['events', event.eventId], { body: { action: 'ARCHIVE' } });
   }
   /**
    * Unarchive an event.
    */
-  async unarchive(event: GAEvent): Promise<void> {
+  async unarchive(event: AssemblyEvent): Promise<void> {
     await this.api.patchResource(['events', event.eventId], { body: { action: 'UNARCHIVE' } });
   }
 
   /**
    * Delete an event.
    */
-  async delete(event: GAEvent): Promise<void> {
+  async delete(event: AssemblyEvent): Promise<void> {
     await this.api.deleteResource(['events', event.eventId]);
   }
 }

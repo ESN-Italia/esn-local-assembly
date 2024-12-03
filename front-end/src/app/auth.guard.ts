@@ -6,6 +6,8 @@ import { IDEAApiService, IDEAStorageService, IDEAWebSocketApiService } from '@id
 import { AppService } from './app.service';
 
 import { User } from '@models/user.model';
+import { ConfigurationsService } from './tabs/configurations/configurations.service';
+import { Title } from '@angular/platform-browser';
 
 export const authGuard: CanActivateFn = async (): Promise<boolean> => {
   const platform = inject(Platform);
@@ -14,7 +16,8 @@ export const authGuard: CanActivateFn = async (): Promise<boolean> => {
   const api = inject(IDEAApiService);
   const webSocket = inject(IDEAWebSocketApiService);
   const app = inject(AppService);
-
+  const _configurations = inject(ConfigurationsService);
+  const title = inject(Title);
   if (app.authReady) return true;
 
   //
@@ -31,6 +34,8 @@ export const authGuard: CanActivateFn = async (): Promise<boolean> => {
 
     app.user = new User(await storage.get('user'));
     if (!app.user) throw new Error('Missing user');
+    app.configurations = await _configurations.get();
+    title.setTitle(app.configurations.appTitle);
   };
 
   const navigateAndResolve = (navigationPath?: string[]): boolean => {

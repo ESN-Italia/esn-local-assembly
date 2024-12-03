@@ -10,10 +10,10 @@ import {
 import { AppService } from '@app/app.service';
 import { TopicsService, TopicsSortBy, TopicsFilterByStatus } from './topics.service';
 import { TopicCategoryService } from '../configurations/categories/categories.service';
-import { GAEventsService } from '../configurations/events/events.service';
+import { AssemblyEventsService } from '../configurations/events/events.service';
 
 import { TopicCategory } from '@models/category.model';
-import { GAEvent } from '@models/event.model';
+import { AssemblyEvent } from '@models/event.model';
 import { Topic, TopicTypes } from '@models/topic.model';
 import { StatisticEntityTypes } from '@models/statistic.model';
 
@@ -31,7 +31,7 @@ export class TopicsPage implements OnInit {
   categories: TopicCategory[];
   filterByCategory: string = null;
 
-  events: GAEvent[];
+  events: AssemblyEvent[];
   filterByEvent: string = null;
 
   filterByStatus: TopicsFilterByStatus = null;
@@ -51,7 +51,7 @@ export class TopicsPage implements OnInit {
     private t: IDEATranslationsService,
     private _topics: TopicsService,
     private _categories: TopicCategoryService,
-    private _events: GAEventsService,
+    private _events: AssemblyEventsService,
     public app: AppService,
     private loading: IDEALoadingService,
     private message: IDEAMessageService,

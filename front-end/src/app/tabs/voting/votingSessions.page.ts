@@ -4,9 +4,9 @@ import { IDEAActionSheetController, IDEATranslationsService } from '@idea-ionic/
 
 import { AppService } from '@app/app.service';
 import { VotingService, VotingSessionsSortBy } from './voting.service';
-import { GAEventsService } from '../configurations/events/events.service';
+import { AssemblyEventsService } from '../configurations/events/events.service';
 
-import { GAEvent } from '@models/event.model';
+import { AssemblyEvent } from '@models/event.model';
 import { VotingSession, VotingSessionTypes } from '@models/votingSession.model';
 
 @Component({
@@ -19,7 +19,7 @@ export class VotingSessionsPage implements OnInit {
 
   @ViewChild('searchbar') searchbar: IonSearchbar;
 
-  events: GAEvent[];
+  events: AssemblyEvent[];
   filterByEvent: string = null;
   filterByType: VotingSessionTypes = null;
   sessionTypes = Object.keys(VotingSessionTypes);
@@ -30,7 +30,7 @@ export class VotingSessionsPage implements OnInit {
     private actionsCtrl: IDEAActionSheetController,
     private t: IDEATranslationsService,
     private _voting: VotingService,
-    private _events: GAEventsService,
+    private _events: AssemblyEventsService,
     public app: AppService
   ) {}
   async ngOnInit(): Promise<void> {

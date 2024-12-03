@@ -3,10 +3,10 @@
     <ion-card class="authCard">
       <ion-img [src]="app.getIcon(app.isInDarkMode())"></ion-img>
       <ion-card-header>
-        <ion-card-subtitle *ngIf="app.configurations.appSubtitle">
-          {{ app.configurations.appSubtitle }}
+        <ion-card-subtitle *ngIf="app.configurations?.appSubtitle">
+          {{ app.configurations?.appSubtitle }}
         </ion-card-subtitle>
-        <ion-card-title>{{ app.configurations.appTitle }}</ion-card-title>
+        <ion-card-title>{{ title }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-button (click)="startLoginFlowWithESNAccounts()">

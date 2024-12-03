@@ -4,10 +4,10 @@ import { IDEALoadingService, IDEAMessageService } from '@idea-ionic/common';
 
 import { AppService } from '@app/app.service';
 import { VotingService, VotingSessionsSortBy } from '../voting.service';
-import { GAEventsService } from '../../configurations/events/events.service';
+import { AssemblyEventsService } from '../../configurations/events/events.service';
 
 import { VotingSession } from '@models/votingSession.model';
-import { GAEvent } from '@models/event.model';
+import { AssemblyEvent } from '@models/event.model';
 
 @Component({
   selector: 'voting-archive',
@@ -17,7 +17,7 @@ import { GAEvent } from '@models/event.model';
 export class VotingArchivePage implements OnInit {
   votingSessions: VotingSession[];
 
-  events: GAEvent[];
+  events: AssemblyEvent[];
   filterByEvent: string = null;
 
   sortBy: VotingSessionsSortBy = VotingSessionsSortBy.CREATED_DATE_DESC;
@@ -27,7 +27,7 @@ export class VotingArchivePage implements OnInit {
     private loading: IDEALoadingService,
     private message: IDEAMessageService,
     private _voting: VotingService,
-    private _events: GAEventsService,
+    private _events: AssemblyEventsService,
     public app: AppService
   ) {}
   async ngOnInit(): Promise<void> {

@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { IDEATranslationsModule } from '@idea-ionic/common';
 
-import { GAEventsService } from '@tabs/configurations/events/events.service';
+import { AssemblyEventsService } from '@tabs/configurations/events/events.service';
 
-import { GAEvent, AssemblyEventAttached } from '@models/event.model';
+import { AssemblyEvent, AssemblyEventAttached } from '@models/event.model';
 
 @Component({
   standalone: true,
@@ -54,9 +54,9 @@ export class EventsPickerComponent implements OnInit {
    */
   @Input() obligatory = false;
 
-  events: GAEvent[];
+  events: AssemblyEvent[];
 
-  constructor(private _events: GAEventsService) {}
+  constructor(private _events: AssemblyEventsService) {}
   async ngOnInit(): Promise<void> {
     this.events = await this._events.getList();
   }
