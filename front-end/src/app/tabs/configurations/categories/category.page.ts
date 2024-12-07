@@ -39,7 +39,7 @@ export class CategoryPage {
         this.category = await this._categories.getById(this.categoryId);
         this.editMode = UXMode.VIEW;
       } else {
-        this.category = new TopicCategory();
+        this.category = new TopicCategory({sectionCode:this.app.user.sectionCode});
         this.editMode = UXMode.INSERT;
       }
     } catch (error) {

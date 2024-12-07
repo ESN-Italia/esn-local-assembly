@@ -38,7 +38,7 @@ export class EventPage {
         this.event = await this._events.getById(this.eventId);
         this.editMode = UXMode.VIEW;
       } else {
-        this.event = new AssemblyEvent();
+        this.event = new AssemblyEvent({sectionCode:this.app.user.sectionCode});
         this.editMode = UXMode.INSERT;
       }
     } catch (error) {

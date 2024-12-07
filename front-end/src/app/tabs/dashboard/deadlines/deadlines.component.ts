@@ -118,7 +118,7 @@ export class DeadlinesComponent implements OnInit {
   }
 
   async addDeadline(): Promise<void> {
-    await this.editDeadline(new Deadline());
+    await this.editDeadline(new Deadline({sectionCode: this.app.user.sectionCode}));
   }
   async editDeadline(deadline: Deadline): Promise<void> {
     const modal = await this.modalCtrl.create({

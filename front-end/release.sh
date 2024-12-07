@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # project specific parameters
-AWS_PROFILE='esn-italia-milan'
-DOMAIN_PROD='local-assembly-esnitalia.click'
-DOMAIN_DEV='dev.local-assembly-esnitalia.click'
+AWS_PROFILE='local-assembly-esn-italia'
+DOMAIN_PROD='uranus-esnitalia.click'
+DOMAIN_DEV='dev.uranus-esnitalia.click'
 
 # other parameters
 ACTION=$1

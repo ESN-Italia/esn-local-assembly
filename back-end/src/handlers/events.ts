@@ -69,7 +69,8 @@ class AssemblEvents extends ResourceController {
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);
 
     const putParams: any = { TableName: DDB_TABLES.events, Item: this.assemblyEvent };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(eventId)';
+    if (opts.noOverwrite)
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(eventId)';
     await ddb.put(putParams);
 
     return this.assemblyEvent;
@@ -80,7 +81,7 @@ class AssemblEvents extends ResourceController {
 
     this.assemblyEvent = new AssemblyEvent(this.body);
     this.assemblyEvent.eventId = await ddb.IUNID(PROJECT);
-
+    if (this.galaxyUser.sectionCode !== this.assemblyEvent.sectionCode) throw new HandledError('Unauthorized');
     return await this.putSafeResource({ noOverwrite: true });
   }
 

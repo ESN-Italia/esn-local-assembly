@@ -245,7 +245,7 @@ export class ConfigurationsPage implements OnInit {
     await modal.present();
   }
   async addCustomBadge(): Promise<void> {
-    await this.manageCustomBadge(new Badge());
+    await this.manageCustomBadge(new Badge({sectionCode:this.app.user.sectionCode}));
   }
   async manageCustomBadge(badge: Badge): Promise<void> {
     const componentProps = { badge };

@@ -17,9 +17,9 @@ export class ApiDomainStack extends cdk.Stack {
       domainName: props.domain.split('.').slice(-2).join('.')
     });
 
-    const certificate = new ACM.DnsValidatedCertificate(this, 'ApiCertificate', {
+    const certificate = new ACM.Certificate(this, 'ApiCertificate', {
       domainName: props.domain,
-      hostedZone: zone
+      validation: ACM.CertificateValidation.fromDns(zone)
     });
 
     const apiDomain = new ApiGw.CfnDomainName(this, 'ApiDomain', {

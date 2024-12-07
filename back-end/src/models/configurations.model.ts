@@ -102,7 +102,7 @@ export class Configurations extends Resource {
 
   validate(): string[] {
     const e = super.validate();
-    if (this.sectionCode) e.push('sectionCode');
+    if (this.iE(this.sectionCode)) e.push('sectionCode');
     if (this.iE(this.administratorsIds)) e.push('administratorsIds');
     if (this.iE(this.appTitle)) e.push('appTitle');
     return e;

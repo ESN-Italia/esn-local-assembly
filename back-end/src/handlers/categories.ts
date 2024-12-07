@@ -62,7 +62,7 @@ class TopicCategories extends ResourceController {
     if (errors.length) throw new HandledError(`Invalid fields: ${errors.join(', ')}`);
 
     const putParams: any = { TableName: DDB_TABLES.categories, Item: this.topicCategory };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(categoryId)';
+    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(categoryId)';
     await ddb.put(putParams);
 
     return this.topicCategory;
@@ -72,6 +72,7 @@ class TopicCategories extends ResourceController {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
     this.topicCategory = new TopicCategory(this.body);
+    if (this.galaxyUser.sectionCode !== this.topicCategory.sectionCode) throw new HandledError('Unauthorized');
     this.topicCategory.categoryId = await ddb.IUNID(PROJECT);
 
     return await this.putSafeResource({ noOverwrite: true });

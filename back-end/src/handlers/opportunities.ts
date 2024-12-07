@@ -89,7 +89,7 @@ class OpportunitiesRC extends ResourceController {
     if (!this.galaxyUser.canManageOpportunities) throw new HandledError('Unauthorized');
 
     this.opportunity = new Opportunity(this.body);
-    this.opportunity.sectionCode = this.galaxyUser.sectionCode;
+    if(this.galaxyUser.sectionCode !== this.opportunity.sectionCode) throw new HandledError('Unauthorized');
     this.opportunity.opportunityId = await ddb.IUNID(PROJECT);
     this.opportunity.createdAt = new Date().toISOString();
     this.opportunity.yearOfCreation = new Date(this.opportunity.createdAt).getFullYear();

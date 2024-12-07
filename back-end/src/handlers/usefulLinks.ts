@@ -91,6 +91,7 @@ class UsefulLinks extends ResourceController {
       throw new HandledError('Unauthorized');
 
     this.usefulLink = new UsefulLink(this.body);
+    if (this.galaxyUser.sectionCode !== this.usefulLink.sectionCode) throw new HandledError('Unauthorized');
     this.usefulLink.linkId = await ddb.IUNID(PROJECT);
 
     return await this.putSafeResource({ noOverwrite: true });

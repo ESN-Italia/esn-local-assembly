@@ -84,6 +84,7 @@ export class ManageTopicPage {
         this.editMode = UXMode.VIEW;
       } else {
         this.topic = new Topic({
+          sectionCode: this.app.user.sectionCode,
           type: this.topicId === 'new-live' ? TopicTypes.LIVE : TopicTypes.STANDARD
         });
         if (this.topicId === 'new-live') this.topic.closedAt = new Date().toISOString();
@@ -258,7 +259,7 @@ export class ManageTopicPage {
     const doDuplicate = async (): Promise<void> => {
       try {
         await this.loading.show();
-        const copy = (await this._topics.duplicate(this.topic));
+        const copy = await this._topics.duplicate(this.topic);
         this.message.success('COMMON.OPERATION_COMPLETED');
         this.app.goToInTabs(['topics', copy.topicId, 'manage'], { root: true });
       } catch (error) {

@@ -134,6 +134,7 @@ class Topics extends ResourceController {
     this.topic = new Topic(this.body);
     this.topic.topicId = await ddb.IUNID(PROJECT);
     this.topic.createdAt = new Date().toISOString();
+    if (this.galaxyUser.sectionCode !== this.topic.sectionCode) throw new HandledError('Unauthorized');
     delete this.topic.updatedAt;
     delete this.topic.numOfQuestions;
 
@@ -170,6 +171,7 @@ class Topics extends ResourceController {
     application = new Application(application);
 
     this.topic = new Topic({
+      sectionCode: this.galaxyUser.sectionCode,
       type: TopicTypes.STANDARD,
       name: `${opportunity.name} - ${application.subject?.name}`,
       content: application.motivation,
@@ -177,7 +179,6 @@ class Topics extends ResourceController {
       category,
       event
     });
-    this.topic.sectionCode = this.galaxyUser.sectionCode;
     this.topic.topicId = await ddb.IUNID(PROJECT);
 
     for (const expectedAtt of opportunity.expectedAttachments) {

@@ -86,7 +86,7 @@ class Deadlines extends ResourceController {
     }
 
     const putParams: any = { TableName: DDB_TABLES.deadlines, Item: this.deadline };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(deadlineId)';
+    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(deadlineId)';
     await ddb.put(putParams);
 
     return this.deadline;
@@ -98,7 +98,7 @@ class Deadlines extends ResourceController {
 
     this.deadline = new Deadline(this.body);
     this.deadline.deadlineId = await ddb.IUNID(PROJECT);
-
+    if (this.galaxyUser.sectionCode !== this.deadline.sectionCode) throw new HandledError('Unauthorized');
     return await this.putSafeResource({ noOverwrite: true });
   }
 

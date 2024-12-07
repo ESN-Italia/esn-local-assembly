@@ -47,7 +47,7 @@ export class ManageOpportunityPage {
         this.editMode = UXMode.VIEW;
       } else {
         if (!this.app.user.canManageOpportunities) return this.app.closePage('COMMON.UNAUTHORIZED');
-        this.opportunity = new Opportunity();
+        this.opportunity = new Opportunity({sectionCode: this.app.user.sectionCode});
         this.editMode = UXMode.INSERT;
       }
     } catch (error) {

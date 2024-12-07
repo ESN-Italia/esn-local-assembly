@@ -98,7 +98,7 @@ class Communications extends ResourceController {
 
     this.communication = new Communication(this.body);
     this.communication.communicationId = await ddb.IUNID(PROJECT);
-
+    if (this.galaxyUser.sectionCode !== this.communication.sectionCode) throw new HandledError('Unauthorized');
     return await this.putSafeResource({ noOverwrite: true });
   }
 

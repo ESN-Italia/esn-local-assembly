@@ -111,6 +111,7 @@ class VotingSessionsRC extends ResourceController {
     if (!this.galaxyUser.isAdministrator) throw new HandledError('Unauthorized');
 
     this.votingSession = new VotingSession(this.body);
+    if (this.galaxyUser.sectionCode !== this.votingSession.sectionCode) throw new HandledError('Unauthorized');
     this.votingSession.sessionId = await ddb.IUNID(PROJECT);
     this.votingSession.createdAt = new Date().toISOString();
     delete this.votingSession.updatedAt;

@@ -103,7 +103,7 @@ export class DashboardPage implements OnInit {
     await modal.present();
   }
   async addCommunication(): Promise<void> {
-    await this.manageCommunication(new Communication());
+    await this.manageCommunication(new Communication({sectionCode: this.app.user.sectionCode}));
   }
 
   async openCommunicationsArchive(): Promise<void> {
@@ -174,7 +174,7 @@ export class DashboardPage implements OnInit {
     await modal.present();
   }
   async addUsefulLink(): Promise<void> {
-    await this.editUsefulLink(new UsefulLink());
+    await this.editUsefulLink(new UsefulLink({sectionCode: this.app.user.sectionCode}));
   }
 }
 

@@ -118,7 +118,7 @@ export class ManageVotingSessionPage implements OnDestroy {
         this.editMode = UXMode.VIEW;
       } else {
         if (!this.app.user.isAdministrator) return this.app.closePage('COMMON.UNAUTHORIZED');
-        this.votingSession = new VotingSession({ type: this.sessionId });
+        this.votingSession = new VotingSession({ sectionCode: this.app.user.sectionCode, type: this.sessionId });
         this.editMode = UXMode.INSERT;
       }
     } catch (error) {
