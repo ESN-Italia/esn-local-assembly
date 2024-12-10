@@ -2,7 +2,7 @@
   <ion-toolbar color="ideaToolbar">
     <ion-title class="ion-text-center">
       <ion-img [src]="app.getIcon(true)" />
-      {{ app.configurations.appTitle }}
+      {{ app.configurations?.appTitle ?? 'Local Assembly app' }}
     </ion-title>
   </ion-toolbar>
 </ion-header>

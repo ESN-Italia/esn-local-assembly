@@ -55,7 +55,10 @@ class VotingSessionsRC extends ResourceController {
 
     try {
       this.votingSession = new VotingSession(
-        await ddb.get({ TableName: DDB_TABLES.votingSessions, Key: { sessionId: this.resourceId } })
+        await ddb.get({
+          TableName: DDB_TABLES.votingSessions,
+          Key: { sectionCode: this.galaxyUser.sectionCode, sessionId: this.resourceId }
+        })
       );
     } catch (err) {
       throw new HandledError('Voting session not found');
@@ -63,7 +66,11 @@ class VotingSessionsRC extends ResourceController {
   }
 
   protected async getResources(): Promise<VotingSession[]> {
-    let votingSessions: VotingSession[] = await ddb.scan({ TableName: DDB_TABLES.votingSessions });
+    let votingSessions: VotingSession[] = await ddb.query({
+      TableName: DDB_TABLES.votingSessions,
+      KeyConditionExpression: 'sectionCode = :sectionCode',
+      ExpressionAttributeValues: { ':sectionCode': this.galaxyUser.sectionCode }
+    });
     votingSessions = votingSessions.map(x => new VotingSession(x));
 
     if (!this.galaxyUser.isAdministrator)
@@ -99,7 +106,8 @@ class VotingSessionsRC extends ResourceController {
     }
 
     const putParams: any = { TableName: DDB_TABLES.votingSessions, Item: this.votingSession };
-    if (opts.noOverwrite) putParams.ConditionExpression = 'attribute_not_exists(sessionId)';
+    if (opts.noOverwrite)
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attributeattribute_not_exists(sessionId)';
     else this.votingSession.updatedAt = new Date().toISOString();
 
     await ddb.put(putParams);
@@ -425,7 +433,10 @@ class VotingSessionsRC extends ResourceController {
   protected async deleteResource(): Promise<void> {
     if (!this.votingSession.canUserManage(this.galaxyUser)) throw new HandledError('Unauthorized');
 
-    await ddb.delete({ TableName: DDB_TABLES.votingSessions, Key: { sessionId: this.votingSession.sessionId } });
+    await ddb.delete({
+      TableName: DDB_TABLES.votingSessions,
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId }
+    });
 
     try {
       const votingTickets: VotingTicket[] = await ddb.query({

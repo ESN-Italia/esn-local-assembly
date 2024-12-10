@@ -108,7 +108,7 @@ class VoteRC extends ResourceController {
     };
     const updateParticipantVoters = {
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       UpdateExpression: 'SET participantVoters = list_append(if_not_exists(participantVoters, :emptyArr), :voters)',
       ExpressionAttributeValues: { ':voters': [votingTicket.voterName], ':emptyArr': [] as string[] }
     };
