@@ -202,13 +202,13 @@ export class BallotsStandaloneComponent implements OnInit, OnChanges, OnDestroy 
       this.charts = [];
       // we need to continue refresh the canvas ID because sometimes the chart's canvas doesn't update
       this.chartCanvasBaseId = 'chartBallot-'.concat(Date.now().toString(), '-');
-      this.votingSession.ballots.forEach((_,bIndex)=>setTimeout((): void => this.buildChart(bIndex), 300));
+      this.votingSession.ballots.forEach((_, bIndex) => setTimeout((): void => this.buildChart(bIndex), 300));
     }
   }
   ngOnDestroy(): void {
     this.charts.forEach(chart => chart?.destroy());
   }
-  onRawChange(bIndex:number): void {
+  onRawChange(bIndex: number): void {
     this.charts[bIndex].destroy();
     // we need to continue refresh the canvas ID because sometimes the chart's canvas doesn't update
     this.chartCanvasBaseId = 'chartBallot-'.concat(Date.now().toString(), '-');
@@ -286,6 +286,8 @@ export class BallotsStandaloneComponent implements OnInit, OnChanges, OnDestroy 
     // @todo this majority should be fixed in the Statutes (it's not possible to calculate "+1" with weighted voting)
     if (majorityType === VotingMajorityTypes.TWO_THIRDS)
       return (this.votingSession.isWeighted ? 2 : 2 * totWithAbstainAndAbsent) / 3;
+    if (majorityType === VotingMajorityTypes.THREE_FOURTHS)
+      return (this.votingSession.isWeighted ? 3 : 3 * totWithAbstainAndAbsent) / 4;
   }
   handleBallotReorder({ detail }): void {
     this.votingSession.ballots = detail.complete(this.votingSession.ballots);

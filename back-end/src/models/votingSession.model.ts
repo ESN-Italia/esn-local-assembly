@@ -320,7 +320,8 @@ export enum VotingMajorityTypes {
   RELATIVE = 'RELATIVE',
   SIMPLE = 'SIMPLE',
   ABSOLUTE = 'ABSOLUTE',
-  TWO_THIRDS = 'TWO_THIRDS'
+  TWO_THIRDS = 'TWO_THIRDS',
+  THREE_FOURTHS = 'THREE_FOURTHS'
 }
 
 /**
