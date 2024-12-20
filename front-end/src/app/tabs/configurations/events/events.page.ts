@@ -16,7 +16,7 @@ export class EventsPage {
 
   constructor(private _events: GAEventsService, public app: AppService) {}
   async ionViewDidEnter(): Promise<void> {
-    this.events = await this._events.getList({ force: true, withPagination: true });
+    this.events = await this._events.getList({ force: true, withPagination: true, all: true });
   }
 
   async paginate(scrollToNextPage?: IonInfiniteScroll): Promise<void> {
