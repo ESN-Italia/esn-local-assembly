@@ -23,6 +23,17 @@
           <ion-select-option *ngFor="let event of events" [value]="event.eventId">{{ event.name }}</ion-select-option>
         </ion-select>
       </ion-item>
+      <ion-item lines="none" color="ideaToolbar" class="ion-hide-lg-down">
+        <ion-select
+          interface="popover"
+          [(ngModel)]="filterByType"
+          [disabled]="!events"
+          (ionChange)="filter(searchbar.value)"
+        >
+          <ion-select-option [value]="null">{{ 'VOTING.ALL_TYPES' | translate }}</ion-select-option>
+          <ion-select-option *ngFor="let type of sessionTypes" [value]="type">{{ 'VOTING.TYPES.' + type | translate }}</ion-select-option>
+        </ion-select>
+      </ion-item>
       <ion-item lines="none" color="ideaToolbar" class="ion-hide-md-down">
         <ion-select interface="popover" [(ngModel)]="sortBy" (ionChange)="filter(searchbar.value)">
           <ion-select-option *ngFor="let sortBy of SortBy | keyvalue" [value]="sortBy.key">

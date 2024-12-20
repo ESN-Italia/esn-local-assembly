@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { WorkBook, utils, writeFile } from 'xlsx';
 import { IDEAApiService } from '@idea-ionic/common';
 
-import { ExportableVoter, Voter, VotingSession } from '@models/votingSession.model';
+import { ExportableVoter, Voter, VotingSession, VotingSessionTypes } from '@models/votingSession.model';
 import { ExportableVotingTicket, VotingTicket } from '@models/votingTicket.model';
 import { VotingResults } from '@models/votingResult.model';
 
@@ -36,6 +36,7 @@ export class VotingService {
       force?: boolean;
       search?: string;
       eventId?: string;
+      type?: VotingSessionTypes;
       withPagination?: boolean;
       startPaginationAfterId?: string;
       sortBy?: VotingSessionsSortBy;
@@ -58,6 +59,7 @@ export class VotingService {
       );
 
     if (options.eventId) filteredList = filteredList.filter(x => x.event.eventId === options.eventId);
+    if (options.type) filteredList = filteredList.filter(x => x.type === options.type);
 
     switch (options.sortBy) {
       case VotingSessionsSortBy.CREATED_DATE_ASC:

@@ -21,7 +21,8 @@ export class VotingSessionsPage implements OnInit {
 
   events: GAEvent[];
   filterByEvent: string = null;
-
+  filterByType: VotingSessionTypes = null;
+  sessionTypes = Object.keys(VotingSessionTypes);
   sortBy: VotingSessionsSortBy = VotingSessionsSortBy.CREATED_DATE_DESC;
   SortBy = VotingSessionsSortBy;
 
@@ -59,6 +60,7 @@ export class VotingSessionsPage implements OnInit {
       force,
       search,
       eventId: this.filterByEvent,
+      type: this.filterByType,
       withPagination: true,
       startPaginationAfterId,
       sortBy: this.sortBy
