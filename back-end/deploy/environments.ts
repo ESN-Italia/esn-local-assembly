@@ -5,7 +5,7 @@ export const PROJECT = 'esn-local-assembly';
 /**
  * The purchased domain to use.
  */
-export const DOMAIN = 'uranus-esnitalia.click';
+export const DOMAIN = 'local-assembly-esnitalia.click';
 /**
  * An additional custom domain to use.
  */
