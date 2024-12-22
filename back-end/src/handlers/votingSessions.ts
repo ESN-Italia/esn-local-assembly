@@ -107,7 +107,7 @@ class VotingSessionsRC extends ResourceController {
 
     const putParams: any = { TableName: DDB_TABLES.votingSessions, Item: this.votingSession };
     if (opts.noOverwrite)
-      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attributeattribute_not_exists(sessionId)';
+      putParams.ConditionExpression = 'attribute_not_exists(sectionCode) AND attribute_not_exists(sessionId)';
     else this.votingSession.updatedAt = new Date().toISOString();
 
     await ddb.put(putParams);
@@ -273,7 +273,7 @@ class VotingSessionsRC extends ResourceController {
 
     await ddb.update({
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       ExpressionAttributeNames: { '#tz': 'timezone' },
       UpdateExpression: 'SET endsAt = :endsAt, #tz = :timezone',
       ExpressionAttributeValues: { ':endsAt': this.votingSession.endsAt, ':timezone': this.votingSession.timezone }
@@ -288,7 +288,7 @@ class VotingSessionsRC extends ResourceController {
     this.votingSession.endsAt = new Date().toISOString();
     await ddb.update({
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       UpdateExpression: 'SET endsAt = :endsAt',
       ExpressionAttributeValues: { ':endsAt': this.votingSession.endsAt }
     });
@@ -332,7 +332,7 @@ class VotingSessionsRC extends ResourceController {
     this.votingSession.endsAt = new Date().toISOString();
     await ddb.update({
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       UpdateExpression: 'SET endsAt = :endsAt',
       ExpressionAttributeValues: { ':endsAt': this.votingSession.endsAt }
     });
@@ -388,7 +388,7 @@ class VotingSessionsRC extends ResourceController {
 
     await ddb.update({
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       UpdateExpression: 'SET results = :results, resultsPublished = :true',
       ExpressionAttributeValues: { ':results': this.votingSession.results, ':true': true }
     });
@@ -409,7 +409,7 @@ class VotingSessionsRC extends ResourceController {
 
     await ddb.update({
       TableName: DDB_TABLES.votingSessions,
-      Key: { sessionId: this.votingSession.sessionId },
+      Key: { sectionCode: this.votingSession.sectionCode, sessionId: this.votingSession.sessionId },
       UpdateExpression: 'SET resultsPublished = :publish, results = :results, participantVoters = :pv',
       ExpressionAttributeValues: {
         ':publish': this.votingSession.resultsPublished,
