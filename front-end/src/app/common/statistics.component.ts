@@ -88,7 +88,6 @@ export class StatisticsComponent implements OnInit {
   @Input({ required: true }) entityId: string | null;
   @Input({ required: true }) period: StatisticPeriods;
   @Input({ required: true }) granularity: StatisticGranularities;
-  @Input({ required: true }) groupBy: 'country' | 'section' | null;
   @Input({ required: true }) chartType: 'bar' | 'line';
   @Input({ required: true }) title: string | null;
 
@@ -145,21 +144,11 @@ export class StatisticsComponent implements OnInit {
       )
     );
 
-    if (this.groupBy === 'country') {
-      Object.entries(this.statistic.byCountry).forEach(([country, data]): number =>
-        datasets.push({ label: country, data })
-      );
-    } else if (this.groupBy === 'section') {
-      Object.entries(this.statistic.bySection).forEach(([section, data]): number =>
-        datasets.push({ label: section, data })
-      );
-    } else {
-      const data = [];
-      Object.values(this.statistic.byCountry).forEach(valuesOfCountry =>
-        valuesOfCountry.forEach((value, index): void => (data[index] = (data[index] ?? 0) + value))
-      );
-      datasets.push({ label: this.t._('STATISTICS.ALL_USERS'), data });
-    }
+    const data = [];
+    Object.values(this.statistic.byCountry).forEach(valuesOfCountry =>
+      valuesOfCountry.forEach((value, index): void => (data[index] = (data[index] ?? 0) + value))
+    );
+    datasets.push({ label: this.t._('STATISTICS.ALL_USERS'), data });
 
     const chartCanvas = document.getElementById('theChart') as HTMLCanvasElement;
     this.chart = new Chart(chartCanvas, {
@@ -170,8 +159,8 @@ export class StatisticsComponent implements OnInit {
         layout: { padding: 20 },
         plugins: { colors: { enabled: true }, tooltip: {}, legend: {} },
         scales: {
-          x: { stacked: this.chartType === 'bar' && !!this.groupBy },
-          y: { stacked: this.chartType === 'bar' && !!this.groupBy, ticks: { precision: 0 } }
+          x: { stacked: this.chartType === 'bar' },
+          y: { stacked: this.chartType === 'bar', ticks: { precision: 0 } }
         }
       }
     });

@@ -25,8 +25,8 @@ export class StatisticEntry extends Resource {
    */
   expiresAt: number;
 
-  static getPK(entityType: StatisticEntityTypes, entityId?: string): string {
-    return [entityType, entityId].filter(x => x).join('###');
+  static getPK(sectionCode: string, entityType: StatisticEntityTypes, entityId?: string): string {
+    return [sectionCode, entityType, entityId].filter(x => x).join('###');
   }
   static getSK(userId: string): string {
     return [StatisticEntry.generateTimestamp(), StatisticEntry.getHashOfString(userId)].join('###');

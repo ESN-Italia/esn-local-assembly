@@ -32,14 +32,6 @@
           <ion-icon name="person"></ion-icon>
           <ion-label>{{ statistic.totals.users }}</ion-label>
         </ion-chip>
-        <ion-chip slot="end" disabled>
-          <ion-icon name="home"></ion-icon>
-          <ion-label>{{ statistic.totals.sections }}</ion-label>
-        </ion-chip>
-        <ion-chip slot="end" disabled>
-          <ion-icon name="earth"></ion-icon>
-          <ion-label>{{ statistic.totals.countries }}</ion-label>
-        </ion-chip>
       </ion-item>
     </ion-col>
   </ion-row>
@@ -80,24 +72,6 @@
       >
         <ion-select-option *ngFor="let g of GranularitiesList" [value]="g">
           {{ 'STATISTICS.GRANULARITIES.' + g | translate }}
-        </ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-select
-        interface="popover"
-        [label]="('STATISTICS.GROUP_BY' | translate) + ':'"
-        [(ngModel)]="groupBy"
-        (ionChange)="buildChart()"
-      >
-        <ion-select-option [value]="null">
-          {{ 'STATISTICS.GROUP_BYS.NONE' | translate }}
-        </ion-select-option>
-        <ion-select-option value="country">
-          {{ 'STATISTICS.GROUP_BYS.COUNTRY' | translate }}
-        </ion-select-option>
-        <ion-select-option value="section">
-          {{ 'STATISTICS.GROUP_BYS.SECTION' | translate }}
         </ion-select-option>
       </ion-select>
     </ion-item>

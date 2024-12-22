@@ -48,7 +48,11 @@ class StatisticsRC extends ResourceController {
     if (!this.queryParams.since || !this.queryParams.to) throw new HandledError('Missing date interval');
     if (!this.queryParams.entityType) throw new HandledError('Missing entity type');
 
-    const pk = StatisticEntry.getPK(this.queryParams.entityType, this.queryParams.entityId);
+    const pk = StatisticEntry.getPK(
+      this.galaxyUser.sectionCode,
+      this.queryParams.entityType,
+      this.queryParams.entityId
+    );
     const since = StatisticEntry.generateTimestamp(this.queryParams.since, -1);
     const to = StatisticEntry.generateTimestamp(this.queryParams.to, 1);
 
@@ -150,12 +154,12 @@ class StatisticsRC extends ResourceController {
  * Add an entry to the statistics.
  */
 export const addStatisticEntry = async (
-  user: { userId: string; country: string; section: string },
+  user: { userId: string; country: string; section: string; sectionCode: string },
   entityType: StatisticEntityTypes,
   entityId?: string
 ): Promise<void> => {
   const statistic = new StatisticEntry({
-    PK: StatisticEntry.getPK(entityType, entityId),
+    PK: StatisticEntry.getPK(user.sectionCode, entityType, entityId),
     SK: StatisticEntry.getSK(user.userId),
     country: user.country,
     section: user.section,
