@@ -50,36 +50,73 @@ class Login extends ResourceController {
     try {
       // build a URL to valid the ticket received (consider also the localhost exception)
       const localhost = this.queryParams.localhost ? `?localhost=${this.queryParams.localhost}` : '';
-      const serviceURL = `https://${this.host}/${this.stage}/login${localhost}`;
-      const validationURL = `${CAS_URL}/serviceValidate?service=${serviceURL}&ticket=${this.queryParams.ticket}`;
+      let user;
+      if (this.queryParams.ticket) {
+        const serviceURL = `https://${this.host}/${this.stage}/login${localhost}`;
+        const validationURL = `${CAS_URL}/serviceValidate?service=${serviceURL}&ticket=${this.queryParams.ticket}`;
 
-      const ticketValidation = await Axios.get(validationURL);
-      const jsonWithUserData = await parseStringPromise(ticketValidation.data);
-      this.logger.debug('CAS ticket validated and parsed', { ticket: jsonWithUserData });
+        const ticketValidation = await Axios.get(validationURL);
+        const jsonWithUserData = await parseStringPromise(ticketValidation.data);
+        this.logger.debug('CAS ticket validated and parsed', { ticket: jsonWithUserData });
 
-      const success = !!jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'];
-      if (!success) throw new HandledError('Login failed');
+        const success = !!jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'];
+        if (!success) throw new HandledError('Login failed');
+        const data = jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'][0];
+        const attributes = data['cas:attributes'][0];
+        const userId = String(data['cas:user'][0]).toLowerCase();
+        const sectionCodes = attributes['cas:extended_roles']
+          .filter((role: string) => role.startsWith('Local'))
+          .map((role: string) => role.split(':')[1]);
 
-      const data = jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'][0];
-      const attributes = data['cas:attributes'][0];
-      const userId = String(data['cas:user'][0]).toLowerCase();
-      const user = new User({
-        userId,
-        email: attributes['cas:mail'][0],
-        sectionCode: attributes['cas:sc'][0],
-        firstName: attributes['cas:first'][0],
-        lastName: attributes['cas:last'][0],
-        roles: attributes['cas:roles'],
-        section: attributes['cas:section'][0],
-        country: attributes['cas:country'][0],
-        avatarURL: attributes['cas:picture'][0]
-      });
+        if (sectionCodes.length > 1) {
+          const appURL = this.queryParams.localhost ? `http://localhost:${this.queryParams.localhost}` : APP_URL;
+          this.callback(null, {
+            statusCode: 302,
+            headers: {
+              Location: `${appURL}/auth?data=${Buffer.from(JSON.stringify(data)).toString(
+                'base64'
+              )}&codes=${sectionCodes}`
+            }
+          });
+          return;
+        }
+        user = new User({
+          userId,
+          email: attributes['cas:mail'][0],
+          sectionCode: attributes['cas:sc'][0],
+          firstName: attributes['cas:first'][0],
+          lastName: attributes['cas:last'][0],
+          roles: attributes['cas:roles'],
+          section: attributes['cas:section'][0],
+          country: attributes['cas:country'][0],
+          avatarURL: attributes['cas:picture'][0]
+        });
+      } else if (this.queryParams.cs && this.queryParams.data) {
+        // Convert a Base64 string back to the original string
+        const decodedString = Buffer.from(this.queryParams.data, 'base64').toString('utf-8');
+        const data = JSON.parse(decodedString);
+        const attributes = data['cas:attributes'][0];
+        const userId = String(data['cas:user'][0]).toLowerCase();
+        const sectionCode = this.queryParams.cs;
+        user = new User({
+          userId,
+          email: attributes['cas:mail'][0],
+          sectionCode,
+          firstName: attributes['cas:first'][0],
+          lastName: attributes['cas:last'][0],
+          roles: attributes['cas:roles'],
+          section: attributes['cas:section'][0],
+          country: attributes['cas:country'][0],
+          avatarURL: attributes['cas:picture'][0]
+        });
+      }
       const { administratorsIds, opportunitiesManagersIds, dashboardManagersIds } = await this.loadOrInitConfigurations(
         user
       );
-      user.isAdministrator = administratorsIds.includes(userId);
-      user.canManageOpportunities = administratorsIds.includes(userId) || opportunitiesManagersIds.includes(userId);
-      user.canManageDashboard = administratorsIds.includes(userId) || dashboardManagersIds.includes(userId);
+      user.isAdministrator = administratorsIds.includes(user.userId);
+      user.canManageOpportunities =
+        administratorsIds.includes(user.userId) || opportunitiesManagersIds.includes(user.userId);
+      user.canManageDashboard = administratorsIds.includes(user.userId) || dashboardManagersIds.includes(user.userId);
       this.logger.info('ESN Accounts login', { user });
 
       const userData = JSON.parse(JSON.stringify(user));

@@ -4,6 +4,7 @@ import { IDEAStorageService } from '@idea-ionic/common';
 import { AppService } from '../app.service';
 
 import { environment as env } from '@env';
+import { AlertButton } from '@ionic/angular';
 
 @Component({
   selector: 'auth-page',
@@ -12,6 +13,11 @@ import { environment as env } from '@env';
 })
 export class AuthPage implements OnInit {
   @Input() token: string;
+  @Input() data: string;
+  @Input() codes: string;
+  isAlertOpen = false;
+  alertButtons: AlertButton[];
+
   title = this.app.configurations?.appTitle ?? env.idea.app.defaultTitle;
   version = env.idea.app.version;
 
@@ -29,7 +35,22 @@ export class AuthPage implements OnInit {
       window.location.assign('');
     }
   }
-
+  ionViewDidEnter(): void {
+    if (this.codes) {
+      const codesList = this.codes.split(',');
+      console.log('codesList', codesList);
+      this.alertButtons = codesList.map(code => ({
+        text: `section code: ${code}`,
+        handler: () => {
+          this.isAlertOpen = false;
+          const apiLoginURL = `https://${env.idea.api.url}/${env.idea.api.stage}/login`;
+          const localhost = location.hostname.startsWith('localhost') ? '?localhost=8100' : '';
+          window.location.assign(`${apiLoginURL}${localhost}&cs=${code}&data=${this.data}`);
+        }
+      }));
+      this.isAlertOpen = true;
+    }
+  }
   startLoginFlowWithESNAccounts(): void {
     const apiLoginURL = `https://${env.idea.api.url}/${env.idea.api.stage}/login`;
     const localhost = location.hostname.startsWith('localhost') ? '?localhost=8100' : '';

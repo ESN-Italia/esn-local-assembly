@@ -17,4 +17,11 @@
       </ion-card-content>
     </ion-card>
   </form>
+  <ion-alert
+    [isOpen]="isAlertOpen"
+    [header]="'AUTH.SELECT_SECTION'| translate"
+    [message]="'AUTH.SELECT_SECTION_MESSAGE'| translate"
+    [buttons]="alertButtons"
+    [backdropDismiss]="false"
+  ></ion-alert>
 </ion-content>
