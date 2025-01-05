@@ -64,9 +64,11 @@ class Login extends ResourceController {
         const data = jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'][0];
         const attributes = data['cas:attributes'][0];
         const userId = String(data['cas:user'][0]).toLowerCase();
-        const sectionCodes = attributes['cas:extended_roles']
-          .filter((role: string) => role.startsWith('Local'))
-          .map((role: string) => role.split(':')[1]);
+        const sectionCodes = Array.from(new Set<string>(
+          attributes['cas:extended_roles']
+            .filter((role: string) => role.startsWith('Local'))
+            .map((role: string) => role.split(':')[1])
+        ));
 
         if (sectionCodes.length > 1) {
           const appURL = this.queryParams.localhost ? `http://localhost:${this.queryParams.localhost}` : APP_URL;
@@ -75,7 +77,7 @@ class Login extends ResourceController {
             headers: {
               Location: `${appURL}/auth?data=${Buffer.from(JSON.stringify(data)).toString(
                 'base64'
-              )}&codes=${sectionCodes}`
+              )}&codes=${sectionCodes.values}`
             }
           });
           return;
