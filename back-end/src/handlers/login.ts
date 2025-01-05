@@ -64,22 +64,22 @@ class Login extends ResourceController {
         const data = jsonWithUserData['cas:serviceResponse']['cas:authenticationSuccess'][0];
         const attributes = data['cas:attributes'][0];
         const userId = String(data['cas:user'][0]).toLowerCase();
-        const sectionCodes = Array.from(
-          new Set<string>(
-            attributes['cas:extended_roles']
-              .filter((role: string) => role.startsWith('Local'))
-              .map((role: string) => role.split(':')[1])
-          )
-        );
+        const sectionCodes = attributes['cas:extended_roles']
+          .filter((role: string) => role.startsWith('Local'))
+          .map((role: string) => role.split(':')[1])
+          .reduce((acc: string[], sectionCode: string) => {
+            if (!acc.includes(sectionCode)) acc.push(sectionCode);
+            return acc;
+          }, []);
 
         if (sectionCodes.length > 1) {
           const appURL = this.queryParams.localhost ? `http://localhost:${this.queryParams.localhost}` : APP_URL;
           this.callback(null, {
             statusCode: 302,
             headers: {
-              Location: `${appURL}/auth?data=${Buffer.from(JSON.stringify(data)).toString('base64')}&codes=${
-                sectionCodes.values
-              }`
+              Location: `${appURL}/auth?data=${Buffer.from(JSON.stringify(data)).toString(
+                'base64'
+              )}&codes=${sectionCodes}`
             }
           });
           return;
@@ -109,11 +109,11 @@ class Login extends ResourceController {
           firstName: attributes['cas:first'][0],
           lastName: attributes['cas:last'][0],
           roles: attributes['cas:roles'],
-          section: ITALIAN_SECTIONS_NAMES[sectionCode.toLowerCase()],
+          section: ITALIAN_SECTIONS_NAMES[sectionCode.toLowerCase()] ?? attributes['cas:section'][0],
           country: attributes['cas:country'][0],
           avatarURL: attributes['cas:picture'][0]
         });
-      }
+      } else throw new HandledError('Login failed');
       const { administratorsIds, opportunitiesManagersIds, dashboardManagersIds } = await this.loadOrInitConfigurations(
         user
       );

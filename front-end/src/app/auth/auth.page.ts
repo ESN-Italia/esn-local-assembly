@@ -45,8 +45,8 @@ export class AuthPage implements OnInit {
         handler: () => {
           this.isAlertOpen = false;
           const apiLoginURL = `https://${env.idea.api.url}/${env.idea.api.stage}/login`;
-          const localhost = location.hostname.startsWith('localhost') ? '?localhost=8100' : '';
-          window.location.assign(`${apiLoginURL}${localhost}&cs=${code}&data=${this.data}`);
+          const localhost = location.hostname.startsWith('localhost') ? '&localhost=8100' : '';
+          window.location.assign(`${apiLoginURL}?cs=${code}&data=${this.data}${localhost}`);
         }
       }));
       this.isAlertOpen = true;
