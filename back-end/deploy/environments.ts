@@ -9,7 +9,7 @@ export const DOMAIN = 'local-assembly-esnitalia.click';
 /**
  * An additional custom domain to use.
  */
-export const PROD_CUSTOM_DOMAIN: string | null = null; //'local-assembly.esn.it';
+export const PROD_CUSTOM_DOMAIN: string | null = 'local-assembly.esn.it';
 
 export const parameters: Parameters = {
   project: PROJECT,
@@ -17,7 +17,7 @@ export const parameters: Parameters = {
   webSocketApiDomain: 'socket.'.concat(DOMAIN),
   mediaDomain: 'media.'.concat(DOMAIN),
   frontEndCertificateARN: PROD_CUSTOM_DOMAIN
-    ? 'arn:aws:acm:us-east-1:186551776547:certificate/71eb9d97-5fe3-4e9f-a4d5-076fe139c85e'
+    ? 'arn:aws:acm:us-east-1:050752636704:certificate/9c378be9-6b6e-454b-95ad-a78b56b4bb5f'
     : undefined
 };
 
