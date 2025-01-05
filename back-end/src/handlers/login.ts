@@ -7,7 +7,7 @@ import { parseStringPromise } from 'xml2js';
 import { sign } from 'jsonwebtoken';
 import { DynamoDB, HandledError, ResourceController, SystemsManager } from 'idea-aws';
 
-import { User, UserRoles } from '../models/user.model';
+import { ITALIAN_SECTIONS_NAMES, User, UserRoles } from '../models/user.model';
 import { Configurations } from '../models/configurations.model';
 
 ///
@@ -105,7 +105,7 @@ class Login extends ResourceController {
           firstName: attributes['cas:first'][0],
           lastName: attributes['cas:last'][0],
           roles: attributes['cas:roles'],
-          section: attributes['cas:section'][0],
+          section: ITALIAN_SECTIONS_NAMES[sectionCode.toLowerCase()],
           country: attributes['cas:country'][0],
           avatarURL: attributes['cas:picture'][0]
         });

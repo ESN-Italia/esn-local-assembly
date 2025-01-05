@@ -5,6 +5,7 @@ import { AppService } from '../app.service';
 
 import { environment as env } from '@env';
 import { AlertButton } from '@ionic/angular';
+import { ITALIAN_SECTIONS_NAMES } from '@models/user.model';
 
 @Component({
   selector: 'auth-page',
@@ -40,7 +41,7 @@ export class AuthPage implements OnInit {
       const codesList = this.codes.split(',');
       console.log('codesList', codesList);
       this.alertButtons = codesList.map(code => ({
-        text: `section code: ${code}`,
+        text: ITALIAN_SECTIONS_NAMES[code.toLowerCase()] ?? code,
         handler: () => {
           this.isAlertOpen = false;
           const apiLoginURL = `https://${env.idea.api.url}/${env.idea.api.stage}/login`;
