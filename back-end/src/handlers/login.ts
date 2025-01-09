@@ -102,13 +102,16 @@ class Login extends ResourceController {
         const attributes = data['cas:attributes'][0];
         const userId = String(data['cas:user'][0]).toLowerCase();
         const sectionCode = this.queryParams.cs;
+        const roles = attributes['cas:extended_roles']
+          .filter((role: string) => role.endsWith(sectionCode))
+          .map((role: string) => role.split(':')[0]);
         user = new User({
           userId,
           email: attributes['cas:mail'][0],
           sectionCode,
           firstName: attributes['cas:first'][0],
           lastName: attributes['cas:last'][0],
-          roles: attributes['cas:roles'],
+          roles: roles,
           section: ITALIAN_SECTIONS_NAMES[sectionCode.toLowerCase()] ?? attributes['cas:section'][0],
           country: attributes['cas:country'][0],
           avatarURL: attributes['cas:picture'][0]
