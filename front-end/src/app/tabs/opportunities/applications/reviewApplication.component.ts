@@ -49,12 +49,13 @@ import { AssemblyEventAttached } from '@models/event.model';
       <ion-list class="ion-padding aList" *ngIf="!opportunity.isArchived()">
         <ion-list-header>
           <ion-label>
-            <h2>{{ 'OPPORTUNITIES.YOUR_REVIEW' | translate }}</h2>
+            <h2>{{ 'OPPORTUNITIES.YOUR_REVIEW' | translate }}<ion-text class="obligatoryDot"></ion-text></h2>
+
             <p>{{ 'OPPORTUNITIES.YOUR_REVIEW_I' | translate }}</p>
             <p>{{ 'OPPORTUNITIES.YOUR_REVIEW_II' | translate }}</p>
           </ion-label>
         </ion-list-header>
-        <ion-item color="white">
+        <ion-item color="white" [class.fieldHasError]="hasFieldAnError('reviewMessage')">
           <ion-textarea placeholder="..." [(ngModel)]="reviewMessage" [rows]="4"></ion-textarea>
         </ion-item>
         <ion-row class="ion-margin">
@@ -135,6 +136,10 @@ export class ReviewApplicationStandaloneComponent implements OnInit {
   }
 
   async review(approved: boolean): Promise<void> {
+    this.errors = new Set<string>();
+    if (!this.reviewMessage) this.errors.add('reviewMessage');
+    if (this.errors.size) return this.message.error('COMMON.FORM_HAS_ERROR_TO_CHECK');
+
     const doReview = async (): Promise<void> => {
       try {
         await this.loading.show();
