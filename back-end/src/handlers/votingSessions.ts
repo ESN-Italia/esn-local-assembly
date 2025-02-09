@@ -237,7 +237,7 @@ class VotingSessionsRC extends ResourceController {
     return this.votingSession;
   }
   private async sendVotingTicketToVoter(ticket: VotingTicket, email: string, sectionCode: string): Promise<void> {
-    const template = `notify-voting-instructions-${STAGE}`;
+    const template = `${this.galaxyUser.sectionCode}-notify-voting-instructions-${STAGE}`;
     const templateData = {
       user: ticket.voterName,
       title: this.votingSession.name,

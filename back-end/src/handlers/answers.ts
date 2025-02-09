@@ -172,7 +172,7 @@ class Answers extends ResourceController {
   }
 
   private async sendNotificationToQuestionMaker(topic: Topic, question: Question): Promise<void> {
-    const template = `notify-new-answer-${STAGE}`;
+    const template = `${this.galaxyUser.sectionCode}-notify-new-answer-${STAGE}`;
     const templateData = {
       user: question.creator.name,
       title: topic.name,

@@ -144,7 +144,7 @@ class VoteRC extends ResourceController {
     }
   }
   private async sendVotingConfirmationToVoter(ticket: VotingTicket, sectionCode: string): Promise<void> {
-    const template = `notify-voting-confirmation-${STAGE}`;
+    const template = `${sectionCode}-notify-voting-confirmation-${STAGE}`;
     const templateData = { user: ticket.voterName, title: this.votingSession.name };
     const { appTitle } = await ddb.get({ TableName: DDB_TABLES.configurations, Key: { sectionCode: sectionCode } });
     const sesConfig = { ...SES_CONFIG, sourceName: appTitle };

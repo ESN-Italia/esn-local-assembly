@@ -205,7 +205,7 @@ class Questions extends ResourceController {
 
   private async sendNotificationToTopicSubjects(topic: Topic, question: Question): Promise<void> {
     const subjectsToNotify = topic.subjects.filter(x => !!x.email);
-    const template = `notify-new-question-${STAGE}`;
+    const template = `${this.galaxyUser.sectionCode}-notify-new-question-${STAGE}`;
     for (const subject of subjectsToNotify) {
       const templateData = {
         user: subject.name,

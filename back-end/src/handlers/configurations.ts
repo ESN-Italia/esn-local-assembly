@@ -93,17 +93,17 @@ class ConfigurationsRC extends ResourceController {
   private getSESTemplateName(emailTemplate: EmailTemplates): string {
     switch (emailTemplate) {
       case EmailTemplates.QUESTIONS:
-        return 'notify-new-question';
+        return `${this.configurations.sectionCode}-notify-new-question`;
       case EmailTemplates.ANSWERS:
-        return 'notify-new-answer';
+        return `${this.configurations.sectionCode}-notify-new-answer`;
       case EmailTemplates.APPLICATION_APPROVED:
-        return 'notify-application-approved';
+        return `${this.configurations.sectionCode}-notify-application-approved`;
       case EmailTemplates.APPLICATION_REJECTED:
-        return 'notify-application-rejected';
+        return `${this.configurations.sectionCode}-notify-application-rejected`;
       case EmailTemplates.VOTING_INSTRUCTIONS:
-        return 'notify-voting-instructions';
+        return `${this.configurations.sectionCode}-notify-voting-instructions`;
       case EmailTemplates.VOTING_CONFIRMATION:
-        return 'notify-voting-confirmation';
+        return `${this.configurations.sectionCode}-notify-voting-confirmation`;
       default:
         throw new HandledError("Template doesn't exist");
     }
@@ -153,9 +153,11 @@ class ConfigurationsRC extends ResourceController {
   }
   private async resetEmailTemplate(emailTemplate: EmailTemplates): Promise<void> {
     const templateName = this.getSESTemplateName(emailTemplate);
+    const index = templateName.indexOf('notify');
+    const general_template = index !== -1 ? templateName.substring(index) : templateName;
     const content = await s3.getObjectAsText({
       bucket: S3_BUCKET_MEDIA,
-      key: S3_ASSETS_FOLDER.concat('/', templateName, '.hbs')
+      key: S3_ASSETS_FOLDER.concat('/', general_template, '.hbs')
     });
     await ses.setTemplate(`${templateName}-${STAGE}`, templateName, content, true);
   }

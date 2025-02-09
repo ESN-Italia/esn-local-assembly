@@ -218,7 +218,7 @@ class ApplicationsRC extends ResourceController {
   private async sendNotificationToApplicantUser(approved: boolean, message: string): Promise<void> {
     const { email } = this.application.subject;
     if (!email) return;
-    const template = approved ? `notify-application-approved-${STAGE}` : `notify-application-rejected-${STAGE}`;
+    const template = approved ? `${this.galaxyUser.sectionCode}-notify-application-approved-${STAGE}` : `${this.galaxyUser.sectionCode}-notify-application-rejected-${STAGE}`;
     const templateData = {
       user: this.application.subject.name,
       title: this.opportunity.name,
