@@ -11,11 +11,18 @@ jobs:
         working-directory: back-end
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js
+      - name: "Configure AWS Credentials" Action for GitHub Actions
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          aws-region: eu-south-1
+          # AWS Access Key ID. Provide this key if you want to assume a role using access keys rather than a web identity token.
+          aws-access-key-id: # optional
+          # AWS Secret Access Key. Required if aws-access-key-id is provided.
+          aws-secret-access-key: # optional   
+      - name: "setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - run: cd back-end
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
