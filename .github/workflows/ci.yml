@@ -1,6 +1,5 @@
-name: Back-end build and test
-
-on: 
+name: Building and testing
+on:
   push:
     branches:
       - '**'
@@ -34,13 +33,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
+      - name: "Install back-end dependencies"
+        run: npm ci
+        working-directory: back-end
       - name: "Install dependencies"
         run: npm ci
       - name: "Lint"
         run: npm run lint
       - name: "Compile"
         run: npx ionic build --configuration development
-      
-        
-        
-  
+
+
+
+
