@@ -41,6 +41,8 @@ jobs:
         run: npm run lint
       - name: "Compile"
         run: npm run compile
+      - name: "Deploy"
+        run: npm run deploy -- --context stage=dev --all --require-approval never
   build-front-end:
     runs-on: ubuntu-latest
     defaults:
