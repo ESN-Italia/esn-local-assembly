@@ -32,3 +32,5 @@ jobs:
       - name: Sts GetCallerIdentity
         run: |
           aws sts get-caller-identity
+      - name: List from cdk
+        run: cdk list
