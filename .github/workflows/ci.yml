@@ -36,7 +36,7 @@ jobs:
         run: |
           aws sts get-caller-identity
       - name: List cdk
-        run: npm run cdk list
+        run: npm run cdk list -- --context stage=dev
       - name: "Lint"
         run: npm run lint
       - name: "Compile"
