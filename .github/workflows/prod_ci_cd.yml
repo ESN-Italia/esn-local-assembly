@@ -67,7 +67,7 @@ jobs:
       - name: "Compile"
         run: npx ionic build --configuration production
       - name: "Deploy"
-        run: bash cd.sh dev
+        run: bash cd.sh prod
 
 
 
