@@ -1,0 +1,73 @@
+name: Building and testing
+on:
+  push:
+    branches: [ main ]
+env:
+  AWS_REGION : "eu-south-1" #Change to reflect your Region
+
+# Permission can be added at job level or workflow level
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+jobs:
+  build-back-end:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back-end
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: "Install dependencies"
+        run: npm ci
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::050752636704:role/GitHubActions #change to reflect your IAM role’s ARN
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
+      - name: "Lint"
+        run: npm run lint
+      - name: "Compile"
+        run: npm run compile
+      - name: "Deploy"
+        run: npm run deploy -- --context stage=prod --all --require-approval never
+  build-front-end:
+    runs-on: ubuntu-latest
+    needs: [build-back-end]
+    defaults:
+      run:
+        working-directory: front-end
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: "Install back-end dependencies"
+        run: npm ci
+        working-directory: back-end
+      - name: "Install dependencies"
+        run: npm ci
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::050752636704:role/GitHubActions #change to reflect your IAM role’s ARN
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+      - name: "Lint"
+        run: npm run lint
+      - name: "Compile"
+        run: npx ionic build --configuration production
+      - name: "Deploy"
+        run: bash cd.sh prod
+
+
+
