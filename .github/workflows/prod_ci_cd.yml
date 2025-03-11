@@ -1,6 +1,6 @@
 name: Building and testing
 on:
-  pull_request:
+  push:
     branches: [ main ]
 env:
   AWS_REGION : "eu-south-1" #Change to reflect your Region
