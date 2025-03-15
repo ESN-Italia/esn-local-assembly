@@ -5,7 +5,7 @@ on:
 env:
   AWS_REGION : "eu-south-1" #Change to reflect your Region
 concurrency:
-  group: production-deploy
+  group: deploy
   cancel-in-progress: true
 # Permission can be added at job level or workflow level
 permissions:

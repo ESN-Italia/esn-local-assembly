@@ -5,7 +5,7 @@ on:
       - main
     types: [opened, synchronize, reopened]
 concurrency:
-  group: development-deploy
+  group: deploy
   cancel-in-progress: true
 env:
   AWS_REGION : "eu-south-1" #Change to reflect your Region
