@@ -1,9 +1,12 @@
 name: Building and testing
 on:
-  push:
+  pull_request:
     branches:
-      - '**'
-      - '!main'
+      - main
+    types: [opened, synchronize, reopened]
+concurrency:
+  group: development-deploy
+  cancel-in-progress: true
 env:
   AWS_REGION : "eu-south-1" #Change to reflect your Region
 
