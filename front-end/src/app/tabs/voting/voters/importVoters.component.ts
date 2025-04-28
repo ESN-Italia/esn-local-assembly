@@ -147,7 +147,7 @@ export class ImportVotersStandaloneComponent implements OnInit {
       const voters = rows.map(
         x =>
           new Voter(
-            { id: x['Voter Identifier']?.trim(), name: x.Name, email: x.Email, voteWeight: x['Vote Weight'] },
+            { id: x['Voter Identifier']?.trim(), name: x.Name, email: x.Email?.trim(), voteWeight: x['Vote Weight'] },
             this.votingSession
           )
       );
